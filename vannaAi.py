@@ -139,17 +139,21 @@ import difflib
 training_examples: list[dict] = []  # preenchido em init_training() mais abaixo
 
 SCHEMA_HINT_BASE = """Você é um especialista em SQL/PostGIS.
-Tabela: br_municipios_2023
+Você tem acesso a DUAS tabelas no banco IBGEData:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABELA 1: br_municipios_2023  (municípios)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Colunas:
   gid         SERIAL PRIMARY KEY
   cd_mun      VARCHAR  -- código IBGE do município (7 dígitos)
   nm_mun      VARCHAR  -- nome do município
   cd_rgi      VARCHAR  -- código da Região Geográfica Imediata
-  nm_rgi      VARCHAR  -- nome da Região Geográfica Imediata (ex: 'São Paulo', 'Campinas', 'Campo Grande')
+  nm_rgi      VARCHAR  -- nome da Região Geográfica Imediata (ex: 'Campo Grande', 'Campinas')
   cd_rgint    VARCHAR  -- código da Região Geográfica Intermediária
   nm_rgint    VARCHAR  -- nome da Região Geográfica Intermediária (ex: 'São Paulo', 'Campinas')
   cd_uf       VARCHAR  -- código numérico do estado (ex: '35' = São Paulo, '50' = Mato Grosso do Sul)
-  nm_uf       VARCHAR  -- nome completo do estado (ex: 'São Paulo', 'Mato Grosso do Sul', 'Minas Gerais')
+  nm_uf       VARCHAR  -- nome completo do estado (ex: 'São Paulo', 'Mato Grosso do Sul')
   cd_regiao   VARCHAR  -- código da região (1=Norte, 2=Nordeste, 3=Sudeste, 4=Sul, 5=Centro-oeste)
   nm_regiao   VARCHAR  -- nome da região (ex: 'Sudeste', 'Norte', 'Centro-oeste')
   cd_concurb  VARCHAR  -- código da concentração urbana (NULL se não pertence)
@@ -157,6 +161,24 @@ Colunas:
   area_km2    DOUBLE   -- área em km²
   geom        GEOMETRY -- polígono WGS84
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABELA 2: br_uf_2023  (estados / unidades da federação)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Colunas:
+  gid         SERIAL PRIMARY KEY
+  cd_uf       VARCHAR  -- código numérico do estado (ex: '35' = SP, '50' = MS)
+  nm_uf       VARCHAR  -- nome completo do estado (ex: 'São Paulo', 'Mato Grosso do Sul')
+  sigla_uf    VARCHAR  -- sigla do estado (ex: 'SP', 'MS', 'RJ', 'MG')
+  cd_regiao   VARCHAR  -- código da região (1=Norte, 2=Nordeste, 3=Sudeste, 4=Sul, 5=Centro-oeste)
+  nm_regiao   VARCHAR  -- nome da região (ex: 'Sudeste', 'Norte', 'Centro-oeste')
+  area_km2    DOUBLE   -- área total do estado em km²
+  geom        GEOMETRY -- polígono do estado WGS84
+
+Relação entre tabelas:
+  br_municipios_2023.cd_uf = br_uf_2023.cd_uf  (JOIN por código do estado)
+  br_municipios_2023.nm_uf = br_uf_2023.nm_uf  (JOIN alternativo por nome)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Valores reais de nm_uf (use EXATAMENTE assim):
   'Acre', 'Alagoas', 'Amapá', 'Amazonas', 'Bahia', 'Ceará', 'Distrito Federal',
   'Espírito Santo', 'Goiás', 'Maranhão', 'Mato Grosso', 'Mato Grosso do Sul',
@@ -166,17 +188,25 @@ Valores reais de nm_uf (use EXATAMENTE assim):
 
 Valores reais de nm_regiao: 'Norte', 'Nordeste', 'Sudeste', 'Sul', 'Centro-oeste'
 
+Valores reais de sigla_uf: 'AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS',
+  'MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Regras OBRIGATÓRIAS:
 - Responda SOMENTE com SQL válido para PostgreSQL, sem explicação.
 - Não use blocos markdown (sem ```).
 - Não inclua ponto-e-vírgula no final.
-- Para filtros de estado use nm_uf com o nome EXATO da lista acima.
+- Use br_uf_2023 para perguntas sobre estados (polígono, área, sigla, listagem de UFs).
+- Use br_municipios_2023 para perguntas sobre municípios.
+- Para perguntas que envolvam ambos, use JOIN: br_municipios_2023 m JOIN br_uf_2023 u ON m.cd_uf = u.cd_uf
+- Para filtros de estado use nm_uf com o nome EXATO da lista acima, ou sigla_uf com a sigla.
 - Para região metropolitana ou área urbana, use nm_concurb ILIKE '%termo%'.
 - Para região geográfica imediata, use nm_rgi ILIKE '%termo%'.
 - Para região geográfica intermediária, use nm_rgint ILIKE '%termo%'.
 - Para região do Brasil (Norte/Sul etc), use nm_regiao = 'Nome'.
 - Para buscas por nome de município, use nm_mun ILIKE '%termo%'.
-- SEMPRE inclua cd_mun e nm_mun no SELECT (permitem destaque no mapa)."""
+- Para consultas em br_municipios_2023, SEMPRE inclua cd_mun e nm_mun no SELECT (permitem destaque no mapa).
+- Para consultas em br_uf_2023, SEMPRE inclua cd_uf, nm_uf e sigla_uf no SELECT."""
 
 
 def _build_system_prompt(question: str) -> tuple[str, str | None]:
@@ -337,11 +367,11 @@ async def ask(body: AskRequest):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# POST /ask/geojson  — recebe o SQL já gerado pelo /ask e retorna GeoJSON.
+# POST /ask/geojson  — recebe o SQL gerado pelo /ask e retorna GeoJSON.
 #
+# Detecta automaticamente se a consulta é sobre municípios (br_municipios_2023)
+# ou estados (br_uf_2023) e faz o join correto para buscar as geometrias.
 # Body: { "question": "...", "sql": "SELECT ..." }
-# O campo sql é obrigatório — reutiliza exatamente o mesmo SQL do /ask,
-# garantindo que os municípios destacados sejam idênticos ao resultado.
 # ─────────────────────────────────────────────────────────────────────────────
 @app.post("/ask/geojson")
 async def ask_geojson(body: AskRequest, tolerance: float = 0.005):
@@ -360,64 +390,120 @@ async def ask_geojson(body: AskRequest, tolerance: float = 0.005):
     # Remove ponto-e-virgula final para usar como subquery
     sql_clean = sql.strip().rstrip(";")
 
-    # Detecta se o SQL retorna cd_mun executando-o com LIMIT 0
-    # para escolher a estratégia de join correta sem ambiguidade.
-    has_cd_mun = False
+    # Detecta colunas retornadas para decidir qual tabela usar no join geométrico
+    col_names = []
     try:
         conn = get_conn()
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(f"SELECT * FROM ({sql_clean}) _probe LIMIT 0")
             col_names = [d.name for d in cur.description] if cur.description else []
-            has_cd_mun = "cd_mun" in col_names
         conn.close()
     except Exception:
-        has_cd_mun = False
+        col_names = []
 
-    if has_cd_mun:
-        # Join exato por cd_mun — sem ambiguidade, sem duplicatas
-        join_cond = "g.cd_mun = sub.cd_mun::text"
+    has_cd_mun = "cd_mun" in col_names
+    has_cd_uf  = "cd_uf"  in col_names
+    has_nm_uf  = "nm_uf"  in col_names
+    has_sigla  = "sigla_uf" in col_names
+
+    # ── Decide se a consulta é sobre estados ou municípios ──────────────────
+    # Heurística: tem cd_uf/sigla_uf mas NÃO tem cd_mun → consulta de estados
+    is_uf_query = (has_cd_uf or has_sigla) and not has_cd_mun
+
+    if is_uf_query:
+        # ── JOIN em br_uf_2023 ───────────────────────────────────────────────
+        if has_cd_uf:
+            join_cond = "g.cd_uf = sub.cd_uf::text"
+        elif has_sigla:
+            join_cond = "g.sigla_uf = sub.sigla_uf::text"
+        else:
+            join_cond = "g.nm_uf = sub.nm_uf"
+
+        geo_sql = """
+            SELECT DISTINCT ON (g.cd_uf)
+                   g.gid, g.cd_uf, g.nm_uf, g.sigla_uf, g.nm_regiao, g.area_km2,
+                   ST_AsGeoJSON(
+                       CASE WHEN {tol} > 0
+                            THEN ST_Simplify(g.geom, {tol}, true)
+                            ELSE g.geom END
+                   )::json AS geometry
+            FROM br_uf_2023 g
+            INNER JOIN (
+                {sub}
+            ) sub ON {join}
+            ORDER BY g.cd_uf
+        """.format(tol=tolerance, sub=sql_clean, join=join_cond)
+
+        try:
+            conn = get_conn()
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(geo_sql)
+                geo_rows = cur.fetchall()
+            conn.close()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erro ao buscar geometrias de estados: {e}")
+
+        features = [
+            {
+                "type": "Feature",
+                "geometry": row["geometry"],
+                "properties": {
+                    "gid":       row["gid"],
+                    "cd_uf":     row["cd_uf"],
+                    "nm_uf":     row["nm_uf"] or "—",
+                    "sigla_uf":  row["sigla_uf"] or "—",
+                    "nm_regiao": row["nm_regiao"] or "—",
+                    "area_km2":  float(row["area_km2"]) if row["area_km2"] else None,
+                },
+            }
+            for row in geo_rows
+        ]
+
     else:
-        # Join por nm_mun exato — filtra pelo mesmo estado para evitar homônimos
-        join_cond = "g.nm_mun = sub.nm_mun AND g.nm_uf = sub.nm_uf"
+        # ── JOIN em br_municipios_2023 (comportamento original) ──────────────
+        if has_cd_mun:
+            join_cond = "g.cd_mun = sub.cd_mun::text"
+        else:
+            join_cond = "g.nm_mun = sub.nm_mun AND g.nm_uf = sub.nm_uf"
 
-    geo_sql = """
-        SELECT DISTINCT ON (g.cd_mun)
-               g.gid, g.cd_mun, g.nm_mun, g.nm_uf, g.area_km2,
-               ST_AsGeoJSON(
-                   CASE WHEN {tol} > 0
-                        THEN ST_Simplify(g.geom, {tol}, true)
-                        ELSE g.geom END
-               )::json AS geometry
-        FROM br_municipios_2023 g
-        INNER JOIN (
-            {sub}
-        ) sub ON {join}
-        ORDER BY g.cd_mun
-    """.format(tol=tolerance, sub=sql_clean, join=join_cond)
+        geo_sql = """
+            SELECT DISTINCT ON (g.cd_mun)
+                   g.gid, g.cd_mun, g.nm_mun, g.nm_uf, g.area_km2,
+                   ST_AsGeoJSON(
+                       CASE WHEN {tol} > 0
+                            THEN ST_Simplify(g.geom, {tol}, true)
+                            ELSE g.geom END
+                   )::json AS geometry
+            FROM br_municipios_2023 g
+            INNER JOIN (
+                {sub}
+            ) sub ON {join}
+            ORDER BY g.cd_mun
+        """.format(tol=tolerance, sub=sql_clean, join=join_cond)
 
-    try:
-        conn = get_conn()
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(geo_sql)
-            geo_rows = cur.fetchall()
-        conn.close()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao buscar geometrias: {e}")
+        try:
+            conn = get_conn()
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(geo_sql)
+                geo_rows = cur.fetchall()
+            conn.close()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erro ao buscar geometrias de municípios: {e}")
 
-    features = [
-        {
-            "type": "Feature",
-            "geometry": row["geometry"],
-            "properties": {
-                "gid":      row["gid"],
-                "cd_mun":   row["cd_mun"],
-                "nm_mun":   row["nm_mun"],
-                "nm_uf":    row["nm_uf"] or "—",
-                "area_km2": float(row["area_km2"]) if row["area_km2"] else None,
-            },
-        }
-        for row in geo_rows
-    ]
+        features = [
+            {
+                "type": "Feature",
+                "geometry": row["geometry"],
+                "properties": {
+                    "gid":      row["gid"],
+                    "cd_mun":   row["cd_mun"],
+                    "nm_mun":   row["nm_mun"],
+                    "nm_uf":    row["nm_uf"] or "—",
+                    "area_km2": float(row["area_km2"]) if row["area_km2"] else None,
+                },
+            }
+            for row in geo_rows
+        ]
 
     return JSONResponse(
         content={"type": "FeatureCollection", "features": features},
@@ -523,6 +609,122 @@ def get_municipios_geojson(page: int = 1, page_size: int = 50, tolerance: float 
                 "cd_mun":   row["cd_mun"],
                 "nm_mun":   row["nm_mun"],
                 "nm_uf":    row["nm_uf"] or "—",
+                "area_km2": float(row["area_km2"]) if row["area_km2"] else None,
+            },
+        }
+        for row in rows
+    ]
+
+    return {
+        "type":      "FeatureCollection",
+        "features":  features,
+        "pagination": {
+            "page":        page,
+            "page_size":   page_size,
+            "total":       total,
+            "total_pages": -(-total // page_size),
+        },
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GeoJSON — Estados (br_uf_2023)
+# GET /geojson/estados/stream  — streaming de todos os estados
+# GET /geojson/estados          — paginado
+# ─────────────────────────────────────────────────────────────────────────────
+def _row_to_feature_uf(row) -> str:
+    props = {
+        "gid":      row["gid"],
+        "cd_uf":    row["cd_uf"],
+        "nm_uf":    row["nm_uf"] or "—",
+        "sigla_uf": row["sigla_uf"] or "—",
+        "nm_regiao": row.get("nm_regiao") or "—",
+        "area_km2": float(row["area_km2"]) if row["area_km2"] else None,
+    }
+    feature = {
+        "type":       "Feature",
+        "geometry":   row["geometry"],
+        "properties": props,
+    }
+    return _json.dumps(feature, ensure_ascii=False)
+
+
+@app.get("/geojson/estados/stream")
+def stream_estados_geojson(tolerance: float = 0.005):
+    sql = """
+        SELECT
+            gid, cd_uf, nm_uf, sigla_uf, nm_regiao, area_km2,
+            ST_AsGeoJSON(
+                CASE WHEN %(tol)s > 0
+                     THEN ST_Simplify(geom, %(tol)s, true)
+                     ELSE geom END
+            )::json AS geometry
+        FROM br_uf_2023
+        ORDER BY nm_uf;
+    """
+
+    def generate():
+        conn = psycopg2.connect(**DB_CONFIG)
+        try:
+            with conn.cursor(name="stream_uf", cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(sql, {"tol": tolerance})
+                yield '{"type":"FeatureCollection","features":[\n'
+                first = True
+                while True:
+                    rows = cur.fetchmany(CURSOR_BATCH)
+                    if not rows:
+                        break
+                    for row in rows:
+                        prefix = "" if first else ","
+                        first = False
+                        yield prefix + _row_to_feature_uf(row) + "\n"
+            yield "]}\n"
+        finally:
+            conn.close()
+
+    return StreamingResponse(
+        generate(),
+        media_type="application/geo+json",
+        headers={"Access-Control-Allow-Origin": "*"},
+    )
+
+
+@app.get("/geojson/estados", response_class=JSONResponse)
+def get_estados_geojson(page: int = 1, page_size: int = 30, tolerance: float = 0.005):
+    page_size = min(page_size, 100)
+    offset    = (page - 1) * page_size
+    sql_count = "SELECT COUNT(*) FROM br_uf_2023;"
+    sql_data  = """
+        SELECT gid, cd_uf, nm_uf, sigla_uf, nm_regiao, area_km2,
+               ST_AsGeoJSON(
+                   CASE WHEN %(tol)s > 0
+                        THEN ST_Simplify(geom, %(tol)s, true)
+                        ELSE geom END
+               )::json AS geometry
+        FROM br_uf_2023
+        ORDER BY nm_uf
+        LIMIT %(lim)s OFFSET %(off)s;
+    """
+    conn = psycopg2.connect(**DB_CONFIG)
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(sql_count)
+            total = cur.fetchone()["count"]
+            cur.execute(sql_data, {"tol": tolerance, "lim": page_size, "off": offset})
+            rows = cur.fetchall()
+    finally:
+        conn.close()
+
+    features = [
+        {
+            "type": "Feature",
+            "geometry": row["geometry"],
+            "properties": {
+                "gid":      row["gid"],
+                "cd_uf":    row["cd_uf"],
+                "nm_uf":    row["nm_uf"] or "—",
+                "sigla_uf": row["sigla_uf"] or "—",
+                "nm_regiao": row["nm_regiao"] or "—",
                 "area_km2": float(row["area_km2"]) if row["area_km2"] else None,
             },
         }
@@ -704,11 +906,15 @@ def download_shapefile(cd_mun: str):
 # ─────────────────────────────────────────────────────────────────────────────
 # Treinamento inicial
 # Edite esta lista para adicionar/corrigir exemplos.
-# IMPORTANTE: sempre inclua cd_mun e nm_mun no SELECT para o mapa funcionar.
+# IMPORTANTE:
+#   - Consultas em br_municipios_2023: inclua cd_mun e nm_mun no SELECT.
+#   - Consultas em br_uf_2023: inclua cd_uf, nm_uf e sigla_uf no SELECT.
+#   - Isso permite o destaque correto no mapa para ambas as tabelas.
 # ─────────────────────────────────────────────────────────────────────────────
 TRAINING_FILE = "training_examples.json"
 
 DEFAULT_EXAMPLES = [
+    # ── br_municipios_2023 ────────────────────────────────────────────────────
     {"question": "Quantos municípios existem?",
      "sql": "SELECT COUNT(*) AS total FROM br_municipios_2023"},
     {"question": "Quantos municípios existem no Mato Grosso do Sul?",
@@ -741,6 +947,40 @@ DEFAULT_EXAMPLES = [
      "sql": "SELECT cd_mun, nm_mun, nm_rgint FROM br_municipios_2023 WHERE nm_rgint ILIKE '%São Paulo%' ORDER BY nm_mun"},
     {"question": "Quantos municípios existem por região do Brasil?",
      "sql": "SELECT nm_regiao, COUNT(*) AS total FROM br_municipios_2023 GROUP BY nm_regiao ORDER BY total DESC"},
+
+    # ── br_uf_2023 ────────────────────────────────────────────────────────────
+    {"question": "Liste todos os estados do Brasil",
+     "sql": "SELECT cd_uf, nm_uf, sigla_uf, nm_regiao, area_km2 FROM br_uf_2023 ORDER BY nm_uf"},
+    {"question": "Quantos estados existem no Brasil?",
+     "sql": "SELECT COUNT(*) AS total FROM br_uf_2023"},
+    {"question": "Qual a sigla do Mato Grosso do Sul?",
+     "sql": "SELECT cd_uf, nm_uf, sigla_uf FROM br_uf_2023 WHERE nm_uf = 'Mato Grosso do Sul'"},
+    {"question": "Liste os estados da região Centro-oeste",
+     "sql": "SELECT cd_uf, nm_uf, sigla_uf, area_km2 FROM br_uf_2023 WHERE nm_regiao = 'Centro-oeste' ORDER BY nm_uf"},
+    {"question": "Liste os estados da região Sudeste",
+     "sql": "SELECT cd_uf, nm_uf, sigla_uf, area_km2 FROM br_uf_2023 WHERE nm_regiao = 'Sudeste' ORDER BY nm_uf"},
+    {"question": "Liste os estados da região Norte",
+     "sql": "SELECT cd_uf, nm_uf, sigla_uf, area_km2 FROM br_uf_2023 WHERE nm_regiao = 'Norte' ORDER BY nm_uf"},
+    {"question": "Qual o maior estado por área?",
+     "sql": "SELECT cd_uf, nm_uf, sigla_uf, area_km2 FROM br_uf_2023 ORDER BY area_km2 DESC LIMIT 1"},
+    {"question": "Quais os 5 maiores estados por área?",
+     "sql": "SELECT cd_uf, nm_uf, sigla_uf, area_km2 FROM br_uf_2023 ORDER BY area_km2 DESC LIMIT 5"},
+    {"question": "Qual o menor estado por área?",
+     "sql": "SELECT cd_uf, nm_uf, sigla_uf, area_km2 FROM br_uf_2023 ORDER BY area_km2 ASC LIMIT 1"},
+    {"question": "Qual a área do estado de São Paulo?",
+     "sql": "SELECT cd_uf, nm_uf, sigla_uf, area_km2 FROM br_uf_2023 WHERE nm_uf = 'São Paulo'"},
+    {"question": "Quantos estados existem por região?",
+     "sql": "SELECT nm_regiao, COUNT(*) AS total FROM br_uf_2023 GROUP BY nm_regiao ORDER BY total DESC"},
+    {"question": "Qual o código IBGE do estado do Mato Grosso do Sul?",
+     "sql": "SELECT cd_uf, nm_uf, sigla_uf FROM br_uf_2023 WHERE nm_uf = 'Mato Grosso do Sul'"},
+
+    # ── JOIN entre as duas tabelas ────────────────────────────────────────────
+    {"question": "Quantos municípios tem cada estado e qual a área total do estado?",
+     "sql": "SELECT u.cd_uf, u.nm_uf, u.sigla_uf, u.area_km2 AS area_estado_km2, COUNT(m.cd_mun) AS total_municipios FROM br_uf_2023 u LEFT JOIN br_municipios_2023 m ON u.cd_uf = m.cd_uf GROUP BY u.cd_uf, u.nm_uf, u.sigla_uf, u.area_km2 ORDER BY total_municipios DESC"},
+    {"question": "Liste os municípios do MS com a sigla do estado",
+     "sql": "SELECT m.cd_mun, m.nm_mun, u.sigla_uf, m.area_km2 FROM br_municipios_2023 m JOIN br_uf_2023 u ON m.cd_uf = u.cd_uf WHERE u.sigla_uf = 'MS' ORDER BY m.nm_mun"},
+    {"question": "Qual o percentual de área que cada estado ocupa na região Centro-oeste?",
+     "sql": "SELECT nm_uf, sigla_uf, area_km2, ROUND((area_km2 / SUM(area_km2) OVER () * 100)::numeric, 2) AS pct_regiao FROM br_uf_2023 WHERE nm_regiao = 'Centro-oeste' ORDER BY area_km2 DESC"},
 ]
 
 
