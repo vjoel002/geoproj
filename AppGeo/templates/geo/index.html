@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoIA — Consultas Inteligentes IBGE</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080e18;
+      --panel:     #0d1625;
+      --panel2:    #111e30;
+      --border:    #1a2d45;
+      --accent:    #00e5a0;
+      --accent2:   #00b87a;
+      --warn:      #f59e0b;
+      --text:      #dce8f5;
+      --muted:     #4d6a85;
+      --font-mono: 'Space Mono', monospace;
+      --font-body: 'Instrument Sans', sans-serif;
+      --radius:    10px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      display: grid;
+      grid-template-rows: 52px 1fr;
+      grid-template-columns: 380px 1fr;
+      grid-template-areas:
+        "header header"
+        "sidebar map";
+      overflow: hidden;
+      height: 100dvh;
+    }
+
+    /* ── Header ─────────────────────────────────── */
+    header {
+      grid-area: header;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 20px;
+      z-index: 1000;
+    }
+
+    .logo-mark {
+      width: 26px; height: 26px;
+      background: var(--accent);
+      clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+      flex-shrink: 0;
+      box-shadow: 0 0 12px rgba(0,229,160,.4);
+    }
+
+    header h1 {
+      font-family: var(--font-mono);
+      font-size: .9rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      color: var(--text);
+    }
+    header h1 span { color: var(--accent); }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #map-status {
+      font-size: .68rem;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 3px 10px;
+      border-radius: 20px;
+      transition: color .3s, border-color .3s;
+    }
+    #map-status.active {
+      color: var(--accent);
+      border-color: rgba(0,229,160,.4);
+    }
+
+    /* ── Sidebar ─────────────────────────────────── */
+    aside {
+      grid-area: sidebar;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Chat Messages ────────────────────────────── */
+    #chat-history {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    #chat-history::-webkit-scrollbar { width: 4px; }
+    #chat-history::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* Welcome screen */
+    .welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      gap: 12px;
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .welcome .icon {
+      font-size: 2.4rem;
+      margin-bottom: 4px;
+      filter: grayscale(0.3);
+    }
+    .welcome h2 {
+      font-family: var(--font-mono);
+      font-size: .85rem;
+      color: var(--text);
+      font-weight: 700;
+      letter-spacing: .06em;
+    }
+    .welcome p {
+      font-size: .78rem;
+      line-height: 1.6;
+      max-width: 260px;
+    }
+    .welcome .examples {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .example-btn {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: .77rem;
+      cursor: pointer;
+      text-align: left;
+      transition: background .15s, border-color .15s;
+    }
+    .example-btn:hover {
+      background: rgba(0,229,160,.07);
+      border-color: rgba(0,229,160,.35);
+      color: var(--accent);
+    }
+
+    /* Message bubbles */
+    .msg {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      animation: fadeUp .3s ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg.user .bubble {
+      align-self: flex-end;
+      background: rgba(0,229,160,.1);
+      border: 1px solid rgba(0,229,160,.25);
+      border-radius: 12px 12px 3px 12px;
+      padding: 9px 13px;
+      font-size: .83rem;
+      color: var(--text);
+      max-width: 90%;
+    }
+
+    .msg.ai .label {
+      font-family: var(--font-mono);
+      font-size: .62rem;
+      color: var(--accent);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .msg.ai .label::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--accent);
+    }
+    .msg.ai .label.thinking::before {
+      animation: pulse 1s ease infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    .msg.ai .answer-text {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 3px 12px 12px 12px;
+      padding: 10px 13px;
+      font-size: .83rem;
+      line-height: 1.65;
+      color: var(--text);
+    }
+
+    /* SQL pill */
+    .sql-pill {
+      background: rgba(0,0,0,.3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-family: var(--font-mono);
+      font-size: .67rem;
+      color: var(--muted);
+      white-space: pre-wrap;
+      word-break: break-word;
+      cursor: pointer;
+      transition: border-color .15s;
+    }
+    .sql-pill:hover { border-color: var(--accent); color: var(--text); }
+    .sql-pill::before {
+      content: 'SQL ↓  ';
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* Chart container */
+    .chart-wrap {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      position: relative;
+    }
+    .chart-wrap canvas { max-height: 180px; }
+
+    /* Map highlight notice */
+    .map-notice {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .75rem;
+      color: var(--accent);
+      padding: 6px 10px;
+      background: rgba(0,229,160,.07);
+      border: 1px solid rgba(0,229,160,.2);
+      border-radius: 6px;
+    }
+    .map-notice svg { flex-shrink: 0; }
+
+    /* Download shapefile button */
+    .download-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(0,229,160,.1);
+      border: 1px solid rgba(0,229,160,.35);
+      border-radius: 6px;
+      padding: 7px 12px;
+      color: var(--accent);
+      font-family: var(--font-body);
+      font-size: .78rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+      width: 100%;
+      justify-content: center;
+    }
+    .download-btn:hover  { background: rgba(0,229,160,.18); }
+    .download-btn:active { transform: scale(.97); }
+    .download-btn:disabled {
+      opacity: .5; cursor: default;
+      background: rgba(0,229,160,.05);
+    }
+    .download-btn svg { flex-shrink: 0; }
+
+    /* Error message */
+    .error-msg {
+      background: rgba(239,68,68,.08);
+      border: 1px solid rgba(239,68,68,.25);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: .8rem;
+      color: #fca5a5;
+    }
+
+    /* ── Input area ───────────────────────────────── */
+    .input-area {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    #question-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-family: var(--font-body);
+      font-size: .85rem;
+      color: var(--text);
+      outline: none;
+      resize: none;
+      min-height: 42px;
+      max-height: 110px;
+      line-height: 1.5;
+      transition: border-color .2s;
+    }
+    #question-input::placeholder { color: var(--muted); }
+    #question-input:focus { border-color: var(--accent); }
+
+    #send-btn {
+      width: 42px; height: 42px;
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s, transform .1s;
+    }
+    #send-btn:hover { background: var(--accent2); }
+    #send-btn:active { transform: scale(.94); }
+    #send-btn:disabled { background: var(--border); cursor: default; }
+    #send-btn svg { color: var(--bg); }
+
+    .input-hint {
+      font-size: .68rem;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    /* ── Map ───────────────────────────────────────── */
+    #map {
+      grid-area: map;
+      width: 100%; height: 100%;
+    }
+
+    /* Leaflet overrides */
+    .leaflet-container { background: var(--bg) !important; }
+    .leaflet-control-attribution { display: none; }
+    .leaflet-control-zoom a {
+      background: var(--panel) !important;
+      color: var(--text) !important;
+      border-color: var(--border) !important;
+    }
+    .leaflet-control-zoom a:hover { background: var(--border) !important; }
+    .leaflet-popup-content-wrapper {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 32px rgba(0,0,0,.7);
+      color: var(--text);
+      font-family: var(--font-body);
+    }
+    .leaflet-popup-tip { background: var(--panel); }
+    .leaflet-popup-content { margin: 12px 16px; font-size: .82rem; line-height: 1.7; }
+    .leaflet-popup-content b { color: var(--accent); font-family: var(--font-mono); font-size: .88rem; display: block; margin-bottom: 4px; }
+
+    /* ── Loading overlay ─────────────────────────── */
+    #loading {
+      position: fixed; inset: 0;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 18px; z-index: 9999;
+      transition: opacity .5s;
+    }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading p {
+      font-family: var(--font-mono);
+      font-size: .8rem;
+      color: var(--muted);
+      letter-spacing: .08em;
+    }
+
+    /* ── Responsive ──────────────────────────────── */
+    @media (max-width: 700px) {
+      body {
+        grid-template-areas: "header" "map";
+        grid-template-columns: 1fr;
+        grid-template-rows: 52px 1fr;
+      }
+      aside { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Carregando mapa base…</p>
+  </div>
+
+  <header>
+    <div class="logo-mark"></div>
+    <h1>GEO<span>IA</span> — Consultas Inteligentes</h1>
+    <div class="header-right">
+      <span id="map-status">mapa base</span>
+    </div>
+  </header>
+
+  <aside>
+    <div id="chat-history">
+      <div class="welcome" id="welcome-screen">
+        <div class="icon">🗺️</div>
+        <h2>Pergunte sobre os municípios</h2>
+        <p>O agente consulta o banco IBGE e responde em texto, gráfico e destaca os resultados no mapa.</p>
+        <div class="examples">
+          <button class="example-btn" onclick="sendExample(this)">Quais os 10 maiores municípios do Brasil por área?</button>
+          <button class="example-btn" onclick="sendExample(this)">Quantos municípios existem no Mato Grosso do Sul?</button>
+          <button class="example-btn" onclick="sendExample(this)">Liste os estados com mais municípios</button>
+          <button class="example-btn" onclick="sendExample(this)">Qual o menor município do MS?</button>
+          <button class="example-btn" onclick="sendExample(this)">Municípios do MS com área acima de 10.000 km²</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-row">
+        <textarea
+          id="question-input"
+          placeholder="Ex: Quais os 5 maiores municípios do MS?"
+          rows="1"
+        ></textarea>
+        <button id="send-btn" onclick="sendQuestion()" title="Enviar (Enter)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+      <div class="input-hint">Enter para enviar · Shift+Enter para nova linha</div>
+    </div>
+  </aside>
+
+  <div id="map"></div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+const API_BASE    = "http://localhost:8001";
+const STREAM_URL  = "http://localhost:8000/geojson/municipios/stream?tolerance=0.005";
+
+// ── Mapa ──────────────────────────────────────────────────────────────────────
+const map = L.map("map", { zoomControl: true, attributionControl: false });
+L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+  maxZoom: 19, subdomains: "abcd"
+}).addTo(map);
+
+const styleDefault = { color:"#1a3a55", weight:0.8, opacity:0.6, fillColor:"#1a3a55", fillOpacity:0.12 };
+const styleActive  = { color:"#00e5a0", weight:2.2, opacity:1,   fillColor:"#00e5a0", fillOpacity:0.22 };
+
+let allFeatures  = [];
+let layerMap     = {};
+let globalBounds = null;
+
+// Camada dos municípios base (não selecionados)
+const visibleLayer = L.geoJSON(null, {
+  style: () => styleDefault,
+  onEachFeature(feature, layer) {
+    const p = feature.properties;
+    layerMap[p.cd_mun] = layer;
+    layer.on({
+      mouseover(e) {
+        if (!layer._highlighted) layer.setStyle({ ...styleDefault, fillOpacity: 0.28, color:"#38bdf8" });
+        layer.bindTooltip(
+          `<b>${p.nm_mun}</b><br>${p.area_km2 ? p.area_km2.toFixed(0) + " km²" : ""}`,
+          { sticky: true, direction: "auto" }
+        ).openTooltip(e.latlng);
+      },
+      mouseout() {
+        if (!layer._highlighted) layer.setStyle(styleDefault);
+        layer.closeTooltip();
+      },
+    });
+  },
+}).addTo(map);
+
+// Camada de destaque (resultado do agente)
+const highlightLayer = L.geoJSON(null, {
+  style: () => styleActive,
+  onEachFeature(feature, layer) {
+    const p = feature.properties;
+    layer._highlighted = true;
+    layer.on({
+      click() {
+        layer.bindPopup(`
+          <b>${p.nm_mun}</b>
+          Código IBGE: ${p.cd_mun}<br>
+          Estado: ${p.nm_uf || "—"}<br>
+          Área: ${p.area_km2 ? p.area_km2.toFixed(2) + " km²" : "—"}
+        `).openPopup();
+      },
+      mouseover(e) {
+        layer.setStyle({ ...styleActive, fillOpacity: 0.4, weight: 3 });
+        layer.bindTooltip(
+          `<b>${p.nm_mun}</b><br>${p.nm_uf} · ${p.area_km2 ? p.area_km2.toFixed(0) + " km²" : ""}`,
+          { sticky: true, direction: "auto" }
+        ).openTooltip(e.latlng);
+      },
+      mouseout() {
+        layer.setStyle(styleActive);
+        layer.closeTooltip();
+      },
+    });
+  },
+}).addTo(map);
+
+// ── Viewport culling ──────────────────────────────────────────────────────────
+let debounceTimer;
+function refreshViewport() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    const bounds = map.getBounds().pad(0.1);
+    const inView = allFeatures.filter(f => {
+      const b = f._bbox;
+      return b && bounds.overlaps(L.latLngBounds([b[1],b[0]], [b[3],b[2]]));
+    });
+    visibleLayer.clearLayers();
+    layerMap = {};
+    visibleLayer.addData({ type:"FeatureCollection", features:inView });
+  }, 150);
+}
+map.on("moveend zoomend", refreshViewport);
+
+// ── Utilitários ───────────────────────────────────────────────────────────────
+function calcBbox(feature) {
+  let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+  function walk(c) {
+    if (typeof c[0]==="number") {
+      if (c[0]<minX) minX=c[0]; if (c[0]>maxX) maxX=c[0];
+      if (c[1]<minY) minY=c[1]; if (c[1]>maxY) maxY=c[1];
+    } else c.forEach(walk);
+  }
+  if (feature.geometry?.coordinates) walk(feature.geometry.coordinates);
+  else return null;
+  return [minX,minY,maxX,maxY];
+}
+
+// ── Carregamento inicial do mapa ──────────────────────────────────────────────
+async function loadBaseMap() {
+  const loadingEl = document.getElementById("loading");
+  const loadingP  = loadingEl.querySelector("p");
+  try {
+    const res = await fetch(STREAM_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let   buffer  = "";
+    let   count   = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
+      for (const line of lines) {
+        const trimmed = line.replace(/^,/, "").trim();
+        if (!trimmed.startsWith("{")) continue;
+        try {
+          const feature = JSON.parse(trimmed);
+          if (feature.type !== "Feature") continue;
+          feature._bbox = calcBbox(feature);
+          if (feature._bbox) {
+            const b  = feature._bbox;
+            const fb = L.latLngBounds([b[1],b[0]], [b[3],b[2]]);
+            globalBounds = globalBounds ? globalBounds.extend(fb) : fb;
+          }
+          allFeatures.push(feature);
+          count++;
+          if (count % 50 === 0) loadingP.textContent = `Carregando… ${count} municípios`;
+        } catch(_) {}
+      }
+    }
+    if (globalBounds) map.fitBounds(globalBounds, { padding:[20,20] });
+    refreshViewport();
+  } catch(err) {
+    loadingEl.innerHTML = `<p style="color:#f87171">Erro ao carregar mapa.<br><small>${err.message}</small></p>`;
+    return;
+  }
+  loadingEl.classList.add("hidden");
+}
+loadBaseMap();
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+let activeChart = null;
+
+function sendExample(btn) {
+  document.getElementById("question-input").value = btn.textContent.trim();
+  sendQuestion();
+}
+
+function autoResize(el) {
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 110) + "px";
+}
+
+document.getElementById("question-input").addEventListener("input", function() {
+  autoResize(this);
+});
+
+document.getElementById("question-input").addEventListener("keydown", function(e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendQuestion();
+  }
+});
+
+async function sendQuestion() {
+  const input    = document.getElementById("question-input");
+  const question = input.value.trim();
+  if (!question) return;
+
+  // Remove welcome screen se ainda visível
+  const welcome = document.getElementById("welcome-screen");
+  if (welcome) welcome.remove();
+
+  input.value = "";
+  input.style.height = "auto";
+  document.getElementById("send-btn").disabled = true;
+
+  const history = document.getElementById("chat-history");
+
+  // Mensagem do usuário
+  appendMsg("user", `<div class="bubble">${escHtml(question)}</div>`);
+
+  // Placeholder "pensando"
+  const aiId = "ai-" + Date.now();
+  appendMsg("ai", `
+    <div class="label thinking" id="lbl-${aiId}">GeoIA — pensando…</div>
+    <div class="answer-text" id="ans-${aiId}">
+      <span style="color:var(--muted)">⏳ Consultando banco de dados…</span>
+    </div>
+  `, aiId);
+
+  history.scrollTop = history.scrollHeight;
+
+  try {
+    // 1. Chama /ask para texto + dados do gráfico
+    const askRes = await fetch(`${API_BASE}/ask`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question }),
+    });
+    if (!askRes.ok) throw new Error(`HTTP ${askRes.status}`);
+    const data = await askRes.json();
+
+    // Atualiza label
+    document.getElementById(`lbl-${aiId}`).textContent = "GeoIA";
+    document.getElementById(`lbl-${aiId}`).classList.remove("thinking");
+
+    // Resposta textual + SQL
+    const ansEl = document.getElementById(`ans-${aiId}`);
+    ansEl.innerHTML = `
+      ${escHtml(data.answer)}
+      <div style="margin-top:8px">
+        <div class="sql-pill" title="Clique para copiar" onclick="copyText(this, \`${escAttr(data.sql)}\`)">${escHtml(data.sql)}</div>
+      </div>
+    `;
+
+    // Gráfico (se disponível)
+    if (data.chart && data.chart.labels && data.chart.labels.length > 1) {
+      const chartEl = document.createElement("div");
+      chartEl.className = "chart-wrap";
+      chartEl.innerHTML = `<canvas id="chart-${aiId}"></canvas>`;
+      document.getElementById(aiId).appendChild(chartEl);
+
+      if (activeChart) { activeChart.destroy(); activeChart = null; }
+      activeChart = new Chart(document.getElementById(`chart-${aiId}`), {
+        type: "bar",
+        data: {
+          labels: data.chart.labels,
+          datasets: [{
+            label: data.chart.y_label,
+            data:  data.chart.values,
+            backgroundColor: "rgba(0,229,160,.25)",
+            borderColor:     "rgba(0,229,160,.8)",
+            borderWidth: 1,
+            borderRadius: 3,
+          }]
+        },
+        options: {
+          responsive: true,
+          animation: { duration: 500 },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "#0d1625",
+              borderColor: "#1a2d45",
+              borderWidth: 1,
+              titleColor: "#00e5a0",
+              bodyColor: "#dce8f5",
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color:"#4d6a85", font:{ size:9 }, maxRotation:35 },
+              grid:  { color:"#1a2d45" },
+            },
+            y: {
+              ticks: { color:"#4d6a85", font:{ size:9 } },
+              grid:  { color:"#1a2d45" },
+            }
+          }
+        }
+      });
+    }
+
+    // 2. Chama /ask/geojson para destacar no mapa
+    try {
+      // Envia o mesmo SQL do /ask — garante que os municípios destacados
+      // sejam exatamente os mesmos do resultado (sem nova chamada ao LLM)
+      const geoRes = await fetch(`${API_BASE}/ask/geojson`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, sql: data.sql }),
+      });
+      if (geoRes.ok) {
+        const geoData = await geoRes.json();
+        if (geoData.features && geoData.features.length > 0) {
+          highlightLayer.clearLayers();
+          highlightLayer.addData(geoData);
+          const bounds = highlightLayer.getBounds();
+          if (bounds.isValid()) map.fitBounds(bounds, { padding:[40,40], maxZoom:9 });
+
+          const cdMuns    = geoData.features.map(f => f.properties.cd_mun);
+          const count     = geoData.features.length;
+          const aiMsgEl   = document.getElementById(aiId);
+
+          // Notícia no mapa
+          const noticeEl = document.createElement("div");
+          noticeEl.className = "map-notice";
+          noticeEl.innerHTML = `
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+            ${count} município${count>1?"s":""} destacado${count>1?"s":""} no mapa
+          `;
+          aiMsgEl.appendChild(noticeEl);
+
+          // Botão de download shapefile
+          const dlBtn = document.createElement("button");
+          dlBtn.className = "download-btn";
+          dlBtn.innerHTML = `
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Baixar Shapefile (${count} município${count>1?"s":""})
+          `;
+          dlBtn.onclick = () => downloadShapefile(cdMuns, question, dlBtn);
+          aiMsgEl.appendChild(dlBtn);
+
+          // Atualiza badge do header
+          const statusEl = document.getElementById("map-status");
+          statusEl.textContent = `${count} destacado${count>1?"s":""}`;
+          statusEl.classList.add("active");
+        }
+      }
+    } catch(_) { /* silencia falha de geojson */ }
+
+  } catch(err) {
+    document.getElementById(`lbl-${aiId}`).textContent = "Erro";
+    document.getElementById(`lbl-${aiId}`).classList.remove("thinking");
+    document.getElementById(`ans-${aiId}`).innerHTML =
+      `<div class="error-msg">❌ ${escHtml(err.message)}</div>`;
+  }
+
+  document.getElementById("send-btn").disabled = false;
+  history.scrollTop = history.scrollHeight;
+}
+
+function appendMsg(role, html, id) {
+  const history = document.getElementById("chat-history");
+  const div = document.createElement("div");
+  div.className = `msg ${role}`;
+  if (id) div.id = id;
+  div.innerHTML = html;
+  history.appendChild(div);
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;");
+}
+function escAttr(str) {
+  return String(str).replace(/`/g,"\\`").replace(/\\/g,"\\\\");
+}
+
+async function copyText(el, text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    const orig = el.style.color;
+    el.style.color = "var(--accent)";
+    setTimeout(() => el.style.color = orig, 800);
+  } catch(_) {}
+}
+
+async function downloadShapefile(cdMuns, question, btn) {
+  btn.disabled = true;
+  const origHtml = btn.innerHTML;
+  btn.innerHTML = `
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin .7s linear infinite">
+      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+    </svg>
+    Gerando arquivo…
+  `;
+
+  // Gera filename a partir da pergunta (primeiras 40 letras, sem espaços)
+  const filename = question.replace(/[^a-zA-Z0-9À-ú ]/g, "").trim().slice(0, 40).replace(/ +/g, "_") || "resultado";
+
+  try {
+    const res = await fetch(`${API_BASE}/download/shapefile/result`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cd_muns: cdMuns, filename }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `${filename}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    btn.innerHTML = `
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      Download concluído!
+    `;
+    setTimeout(() => { btn.innerHTML = origHtml; btn.disabled = false; }, 3000);
+
+  } catch(err) {
+    btn.innerHTML = `❌ Erro: ${escHtml(err.message)}`;
+    btn.style.color = "#fca5a5";
+    btn.style.borderColor = "rgba(239,68,68,.3)";
+    setTimeout(() => { btn.innerHTML = origHtml; btn.disabled = false; btn.style.color = ""; btn.style.borderColor = ""; }, 4000);
+  }
+}
+</script>
+</body>
+</html>
