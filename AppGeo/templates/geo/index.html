@@ -87,6 +87,21 @@
       align-items: center;
       gap: 10px;
     }
+    /*========================================= Menu ==================================-->*/
+    header {
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 4rem;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    /*========================================= Menu ==================================-->*/
 
     #map-status {
       font-size: .68rem;
@@ -440,7 +455,6 @@
   </style>
 </head>
 <body>
-
   <div id="loading">
     <div class="spinner"></div>
     <p>Carregando mapa base…</p>
@@ -449,6 +463,13 @@
   <header>
     <div class="logo-mark"></div>
     <h1>GEO<span>IA</span> — Consultas Inteligentes</h1>
+    <!-- ========================================= Menu ==================================-->
+    <nav class="nav-links">
+      <div class="blog"><h1><a href="http://127.0.0.1:8000/blog/">BLOG</a></h1></div>
+      <div class="sobre"><h1><a href="http://127.0.0.1:8000/sobre/">SOBRE</a></h1></div>
+      <div class="contato"><h1><a href="http://127.0.0.1:8000/contato/">CONTATO</a></h1></div>
+    </nav>
+    <!-- ========================================= Menu ==================================-->
     <div class="header-right">
       <span id="map-status">mapa base</span>
     </div>
