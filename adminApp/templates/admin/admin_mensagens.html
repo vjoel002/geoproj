@@ -1,0 +1,165 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Mensagens — Admin{% endblock %}
+
+{% block content %}
+<div class="msgs-layout">
+
+  <div class="msgs-topbar">
+    <div class="topbar-left">
+      <a href="{% url 'admin_dashboard' %}" class="back-btn">&#8592; Dashboard</a>
+      <div class="post-meta">
+        <h1>Mensagens</h1>
+        <p>{% if nao_lidas %}{{ nao_lidas }} não lida{{ nao_lidas|pluralize }}{% else %}Tudo lido{% endif %}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="msgs-body">
+
+    <!-- Lista -->
+    <div class="msgs-list">
+      {% for msg in mensagens %}
+        <a href="?id={{ msg.id }}"
+           class="msg-item {% if not msg.lida %}msg-unread{% endif %} {% if msg_detalhe and msg_detalhe.id == msg.id %}msg-active{% endif %}">
+          <div class="msg-top">
+            <span class="msg-email">{{ msg.email }}</span>
+            <span class="msg-date">{{ msg.criado_em|date:"d/m/Y" }}</span>
+          </div>
+          <div class="msg-preview">{{ msg.mensagem|truncatechars:60 }}</div>
+          {% if not msg.lida %}
+            <span class="unread-dot"></span>
+          {% endif %}
+        </a>
+      {% empty %}
+        <div class="msgs-empty">
+          <span>&#9993;</span>
+          <p>Nenhuma mensagem ainda.</p>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Detalhe -->
+    <div class="msg-detail">
+      {% if msg_detalhe %}
+        <div class="detail-header">
+          <div class="detail-info">
+            <h2>{{ msg_detalhe.email }}</h2>
+            <div class="detail-meta">
+              {% if msg_detalhe.telefone %}
+                <span>&#128222; {{ msg_detalhe.telefone }}</span>
+              {% endif %}
+              <span>&#128197; {{ msg_detalhe.criado_em|date:"d \d\e F \d\e Y \à\s H:i" }}</span>
+            </div>
+          </div>
+          <form method="POST" action="{% url 'deletar_mensagem' msg_detalhe.id %}"
+                onsubmit="return confirm('Deletar esta mensagem?')">
+            {% csrf_token %}
+            <button type="submit" class="btn-delete">&#128465; Deletar</button>
+          </form>
+        </div>
+        <div class="detail-body">
+          {{ msg_detalhe.mensagem|linebreaks }}
+        </div>
+      {% else %}
+        <div class="detail-empty">
+          <span>&#128140;</span>
+          <p>Selecione uma mensagem para ler.</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+</div>
+
+<style>
+  .msgs-layout {
+    display: flex; flex-direction: column;
+    height: 100vh; overflow: hidden;
+    font-family: 'Segoe UI', sans-serif;
+    background: #f5f5f3; color: #1a1a1a;
+  }
+
+  .msgs-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 24px; background: #fff;
+    border-bottom: 1px solid #e5e5e0; flex-shrink: 0;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .back-btn { font-size: 13px; color: #666; text-decoration: none; }
+  .back-btn:hover { color: #1a1a1a; }
+  .post-meta h1 { font-size: 15px; font-weight: 600; margin: 0; }
+  .post-meta p  { font-size: 12px; color: #888; margin: 2px 0 0; }
+
+  .msgs-body {
+    display: flex; flex: 1; overflow: hidden;
+  }
+
+  /* Lista */
+  .msgs-list {
+    width: 300px; min-width: 300px;
+    border-right: 1px solid #e5e5e0;
+    overflow-y: auto; background: #fff;
+  }
+  .msg-item {
+    display: block; position: relative;
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0f0ec;
+    text-decoration: none; color: inherit;
+    transition: background 0.1s;
+  }
+  .msg-item:hover { background: #f9f9f7; }
+  .msg-active { background: #f0eeff !important; }
+  .msg-unread .msg-email { font-weight: 700; }
+  .msg-top {
+    display: flex; justify-content: space-between;
+    align-items: center; margin-bottom: 4px;
+  }
+  .msg-email { font-size: 13px; color: #1a1a1a; }
+  .msg-date  { font-size: 11px; color: #aaa; }
+  .msg-preview { font-size: 12px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .unread-dot {
+    position: absolute; top: 16px; right: 14px;
+    width: 7px; height: 7px;
+    background: #6C47FF; border-radius: 50%;
+  }
+  .msgs-empty {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; height: 200px;
+    color: #aaa; font-size: 13px; gap: 8px;
+  }
+  .msgs-empty span { font-size: 32px; }
+
+  /* Detalhe */
+  .msg-detail {
+    flex: 1; overflow-y: auto; padding: 28px 32px;
+  }
+  .detail-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 20px; padding-bottom: 16px;
+    border-bottom: 1px solid #e5e5e0;
+  }
+  .detail-info h2 { font-size: 18px; font-weight: 700; margin: 0 0 6px; }
+  .detail-meta {
+    display: flex; gap: 16px; font-size: 12px; color: #888;
+  }
+  .btn-delete {
+    padding: 7px 14px; background: #fff;
+    border: 1px solid #fca5a5; border-radius: 8px;
+    color: #b91c1c; font-size: 13px; cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-delete:hover { background: #fff0f0; }
+  .detail-body {
+    font-size: 15px; line-height: 1.8; color: #2a2a2a;
+  }
+  .detail-empty {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; height: 300px;
+    color: #aaa; font-size: 13px; gap: 10px;
+  }
+  .detail-empty span { font-size: 40px; }
+</style>
+
+{% endblock %}

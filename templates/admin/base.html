@@ -29,8 +29,9 @@
 <body>
   <nav class="nav">
     <a href="{% url 'admin_dashboard' %}">Dashboard</a>
-    <a href="{% url 'criar_post' %}">Novo Post</a>
+    <a href="{% url 'criar_post' %}">Blog</a>
     <a href="{% url 'admin_sobre' %}">Sobre</a>
+    <a href="{% url 'admin_mensagens' %}">Mensagens</a>
 
     {% if user.is_authenticated %}
       <div class="nav-logout">

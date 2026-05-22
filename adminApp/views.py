@@ -56,6 +56,7 @@ def editar_post(request, post_id):
 from django.shortcuts import render, redirect, get_object_or_404
 from adminApp.models import Admin, Post
 from django.contrib.auth.decorators import login_required
+from AppGeo.models import Contato
 
 @login_required
 def admin_dashboard(request):
@@ -157,3 +158,30 @@ def admin_sobre(request):
 def sobre(request):
     sobre = Sobre.objects.first()
     return render(request, 'sobre.html', {'sobre': sobre})
+
+
+@login_required
+def admin_mensagens(request):
+    mensagens = Contato.objects.all()
+    # Marcar como lida ao abrir o detalhe
+    msg_id = request.GET.get('id')
+    msg_detalhe = None
+    if msg_id:
+        msg_detalhe = get_object_or_404(Contato, id=msg_id)
+        if not msg_detalhe.lida:
+            msg_detalhe.lida = True
+            msg_detalhe.save()
+    nao_lidas = mensagens.filter(lida=False).count()
+    return render(request, 'admin/admin_mensagens.html', {
+        'mensagens': mensagens,
+        'msg_detalhe': msg_detalhe,
+        'nao_lidas': nao_lidas,
+    })
+
+
+@login_required
+def deletar_mensagem(request, msg_id):
+    msg = get_object_or_404(Contato, id=msg_id)
+    if request.method == 'POST':
+        msg.delete()
+    return redirect('admin_mensagens')

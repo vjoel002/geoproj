@@ -15,6 +15,8 @@ urlpatterns = [
     path('deletar_post/<int:post_id>/', views.deletar_post, name='deletar_post'),
     path('admin_sobre/', views.admin_sobre, name='admin_sobre'),
     path('sobre/', views.sobre, name='sobre'),
+    path('admin_mensagens/', views.admin_mensagens, name='admin_mensagens'),
+    path('deletar_mensagem/<int:msg_id>/', views.deletar_mensagem, name='deletar_mensagem'),
 ]
 
 

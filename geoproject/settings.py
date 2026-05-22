@@ -130,3 +130,4 @@ STATIC_URL = 'static/'
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/admin_dashboard/'
+LOGOUT_REDIRECT_URL = '/login/'
