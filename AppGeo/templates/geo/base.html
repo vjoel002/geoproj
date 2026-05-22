@@ -5,6 +5,10 @@
     <title>Document</title>
 </head>
 <body>
+    <a href="{% url 'index' %}">Home</a>
+    <a href="{% url 'blog' %}">Blog</a>
+    <a href="{% url 'sobre' %}">Sobre</a>
+    <a href="{% url 'contato' %}">Contato</a>
     {% block content %}{% endblock content %}
 </body>
 </html>

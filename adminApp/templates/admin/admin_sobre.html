@@ -1,0 +1,316 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Editar Sobre — Admin{% endblock %}
+
+{% block content %}
+<div class="sobre-layout">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="{% url 'admin_dashboard' %}" class="back-btn">&#8592; Dashboard</a>
+      <div class="post-meta">
+        <h1>Página Sobre</h1>
+        <p>Gerencie suas informações profissionais.</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      {% if sobre and sobre.atualizado_em %}
+        <span class="saved-badge">&#10003; Salvo às {{ sobre.atualizado_em|date:"H:i" }}</span>
+      {% endif %}
+      <a href="{% url 'sobre' %}" class="btn-outline" target="_blank">&#128065; Visualizar</a>
+      <button type="submit" form="sobreForm" class="btn-primary">&#8679; Salvar</button>
+    </div>
+  </div>
+
+  <form id="sobreForm" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="editor-body">
+
+      <!-- Coluna principal -->
+      <div class="editor-main">
+
+        <!-- Nome e título -->
+        <div class="card">
+          <h2 class="card-title">Identidade</h2>
+          <div class="field-row">
+            <div class="field-group">
+              <label for="nome">Nome completo</label>
+              <input type="text" id="nome" name="nome" class="field-input"
+                value="{{ sobre.nome|default:'' }}" placeholder="Seu nome completo">
+            </div>
+            <div class="field-group">
+              <label for="titulo_profissional">Título profissional</label>
+              <input type="text" id="titulo_profissional" name="titulo_profissional" class="field-input"
+                value="{{ sobre.titulo_profissional|default:'' }}"
+                placeholder="Ex: Desenvolvedor Full Stack">
+            </div>
+          </div>
+        </div>
+
+        <!-- Bio -->
+        <div class="card">
+          <h2 class="card-title">Bio</h2>
+          <div class="field-group">
+            <label for="bio">Texto de apresentação</label>
+            <textarea id="bio" name="bio" class="field-textarea"
+              rows="6" placeholder="Escreva um texto sobre você, sua trajetória e experiências...">{{ sobre.bio|default:'' }}</textarea>
+          </div>
+        </div>
+
+        <!-- Contato -->
+        <div class="card">
+          <h2 class="card-title">Contato</h2>
+          <div class="field-row">
+            <div class="field-group">
+              <label for="email">E-mail</label>
+              <input type="email" id="email" name="email" class="field-input"
+                value="{{ sobre.email|default:'' }}" placeholder="seu@email.com">
+            </div>
+            <div class="field-group">
+              <label for="telefone">Telefone</label>
+              <input type="text" id="telefone" name="telefone" class="field-input"
+                value="{{ sobre.telefone|default:'' }}" placeholder="+55 (67) 9 9999-9999">
+            </div>
+          </div>
+        </div>
+
+        <!-- Links -->
+        <div class="card">
+          <h2 class="card-title">Links</h2>
+
+          <div class="field-group">
+            <label for="linkedin">
+              <span class="link-icon" style="background:#0A66C2">in</span> LinkedIn
+            </label>
+            <input type="url" id="linkedin" name="linkedin" class="field-input"
+              value="{{ sobre.linkedin|default:'' }}"
+              placeholder="https://linkedin.com/in/seu-perfil">
+          </div>
+
+          <div class="field-group">
+            <label for="github">
+              <span class="link-icon" style="background:#24292F">&#9670;</span> GitHub
+            </label>
+            <input type="url" id="github" name="github" class="field-input"
+              value="{{ sobre.github|default:'' }}"
+              placeholder="https://github.com/seu-usuario">
+          </div>
+
+          <div class="field-group">
+            <label for="lattes">
+              <span class="link-icon" style="background:#337AB7">L</span> Lattes
+            </label>
+            <input type="url" id="lattes" name="lattes" class="field-input"
+              value="{{ sobre.lattes|default:'' }}"
+              placeholder="http://lattes.cnpq.br/seu-id">
+          </div>
+
+          <div class="field-group">
+            <label for="portfolio">
+              <span class="link-icon" style="background:#6C47FF">&#9670;</span> Portfolio / Site
+            </label>
+            <input type="url" id="portfolio" name="portfolio" class="field-input"
+              value="{{ sobre.portfolio|default:'' }}"
+              placeholder="https://seusite.com">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sidebar -->
+      <aside class="sidebar-right">
+        <div class="side-section">
+          <h2 class="section-title">Foto de perfil</h2>
+
+          <div class="foto-preview" id="fotoPreviewWrap">
+            {% if sobre and sobre.foto %}
+              <img id="fotoPreview" src="{{ sobre.foto.url }}" alt="Foto de perfil">
+            {% else %}
+              <div id="fotoPlaceholder" class="foto-placeholder">&#128100;</div>
+              <img id="fotoPreview" src="" style="display:none" alt="Foto de perfil">
+            {% endif %}
+          </div>
+
+          <div class="img-actions">
+            <label for="foto" class="img-btn">Alterar foto</label>
+            <input type="file" id="foto" name="foto" accept="image/*"
+              style="display:none" onchange="previewFoto(this)">
+            <button type="button" class="img-btn img-btn-icon"
+              onclick="clearFoto()" title="Remover">&#128465;</button>
+          </div>
+          <input type="hidden" name="remover_foto" id="removerFoto" value="0">
+          <p class="img-hint">Quadrada, mín. 300x300px</p>
+        </div>
+
+        <button type="submit" form="sobreForm" class="btn-save-draft">
+          Salvar alterações
+        </button>
+      </aside>
+
+    </div>
+  </form>
+
+  <div class="statusbar">
+    <span>PÁGINA SOBRE</span>
+    <span>
+      {% if sobre and sobre.atualizado_em %}
+        SALVO ÀS {{ sobre.atualizado_em|date:"H:i" }}
+      {% else %}
+        NÃO SALVO AINDA
+      {% endif %}
+    </span>
+  </div>
+
+</div>
+
+<style>
+  .sobre-layout {
+    display: flex; flex-direction: column;
+    min-height: 100vh;
+    font-family: 'Segoe UI', sans-serif;
+    background: #f5f5f3; color: #1a1a1a;
+  }
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 24px; background: #fff;
+    border-bottom: 1px solid #e5e5e0;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .back-btn { font-size: 13px; color: #666; text-decoration: none; }
+  .back-btn:hover { color: #1a1a1a; }
+  .post-meta h1 { font-size: 15px; font-weight: 600; margin: 0; }
+  .post-meta p  { font-size: 12px; color: #888; margin: 2px 0 0; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .saved-badge  { font-size: 12px; color: #22a06b; }
+
+  .btn-outline {
+    padding: 7px 14px; border: 1px solid #d0d0c8; border-radius: 8px;
+    font-size: 13px; background: #fff; color: #444;
+    text-decoration: none; cursor: pointer; font-family: inherit;
+  }
+  .btn-outline:hover { background: #f5f5f3; }
+  .btn-primary {
+    padding: 7px 16px; background: #1a1a1a; color: #fff;
+    border: none; border-radius: 8px; font-size: 13px;
+    font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .btn-primary:hover { background: #333; }
+  .btn-save-draft {
+    width: 100%; padding: 9px; border: 1px solid #d0d0c8;
+    border-radius: 8px; background: #fff; font-size: 13px;
+    color: #444; cursor: pointer; font-family: inherit;
+  }
+  .btn-save-draft:hover { background: #f5f5f3; }
+
+  .editor-body { display: flex; flex: 1; }
+  .editor-main {
+    flex: 1; padding: 24px;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+
+  .card {
+    background: #fff; border: 1px solid #e5e5e0;
+    border-radius: 10px; padding: 20px;
+  }
+  .card-title {
+    font-size: 13px; font-weight: 600; color: #555;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    margin: 0 0 16px;
+  }
+
+  .field-row { display: flex; gap: 16px; }
+  .field-row .field-group { flex: 1; }
+  .field-group { margin-bottom: 14px; }
+  .field-group label {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 12px; color: #666; margin-bottom: 6px;
+  }
+  .field-input {
+    width: 100%; padding: 9px 12px;
+    border: 1px solid #d0d0c8; border-radius: 8px;
+    font-size: 13px; font-family: inherit;
+    background: #fff; color: #1a1a1a;
+    outline: none; box-sizing: border-box;
+  }
+  .field-input:focus { border-color: #6C47FF; }
+  .field-textarea {
+    width: 100%; padding: 10px 12px;
+    border: 1px solid #d0d0c8; border-radius: 8px;
+    font-size: 13px; font-family: inherit;
+    background: #fff; color: #1a1a1a;
+    outline: none; resize: vertical; box-sizing: border-box;
+  }
+  .field-textarea:focus { border-color: #6C47FF; }
+
+  .link-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 4px;
+    font-size: 10px; font-weight: 700; color: #fff;
+  }
+
+  .sidebar-right {
+    width: 230px; min-width: 230px;
+    background: #fff; border-left: 1px solid #e5e5e0;
+    padding: 18px; display: flex; flex-direction: column; gap: 18px;
+  }
+  .side-section { border-bottom: 1px solid #e5e5e0; padding-bottom: 16px; }
+  .section-title { font-size: 13px; font-weight: 600; margin: 0 0 12px; }
+
+  .foto-preview {
+    width: 100%; height: 130px;
+    border-radius: 50%; border: 2px solid #e5e5e0;
+    overflow: hidden; background: #f5f5f3;
+    margin: 0 auto 12px; width: 130px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .foto-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .foto-placeholder { font-size: 48px; color: #ccc; }
+
+  .img-actions { display: flex; gap: 6px; margin-top: 4px; }
+  .img-btn {
+    flex: 1; padding: 6px 10px; font-size: 12px;
+    border: 1px solid #d0d0c8; border-radius: 8px;
+    background: none; color: #555; cursor: pointer;
+    text-align: center; font-family: inherit;
+  }
+  .img-btn:hover { background: #f5f5f3; }
+  .img-btn-icon { flex: 0; padding: 6px 10px; }
+  .img-hint { font-size: 11px; color: #aaa; margin-top: 6px; text-align: center; }
+
+  .statusbar {
+    display: flex; justify-content: space-between;
+    padding: 6px 24px; background: #fff;
+    border-top: 1px solid #e5e5e0;
+    font-size: 11px; color: #aaa; letter-spacing: 0.05em;
+  }
+</style>
+
+<script>
+  function previewFoto(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const preview = document.getElementById('fotoPreview');
+        const placeholder = document.getElementById('fotoPlaceholder');
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+        document.getElementById('removerFoto').value = '0';
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  function clearFoto() {
+    const preview = document.getElementById('fotoPreview');
+    const placeholder = document.getElementById('fotoPlaceholder');
+    preview.src = '';
+    preview.style.display = 'none';
+    if (placeholder) placeholder.style.display = 'flex';
+    document.getElementById('foto').value = '';
+    document.getElementById('removerFoto').value = '1';
+  }
+</script>
+
+{% endblock %}

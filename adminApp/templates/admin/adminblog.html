@@ -1,0 +1,473 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}{% if post %}Editar post{% else %}Novo post{% endif %} — MeuBlog{% endblock %}
+
+{% block content %}
+<div class="editor-layout">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="{% url 'admin_dashboard' %}" class="back-btn">&#8592; Voltar</a>
+      <div class="post-meta">
+        <h1>{% if post %}Editar post{% else %}Novo post{% endif %}</h1>
+        <p>{% if post %}Atualize o conteúdo e publique quando estiver pronto.{% else %}Escreva seu post e publique quando estiver pronto.{% endif %}</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      {% if post and post.atualizado_em %}
+        <span class="saved-badge">&#10003; Salvo automaticamente</span>
+      {% endif %}
+      {% if post %}
+        <a href="{% url 'visualizar_post' post.id %}" class="btn-outline" target="_blank">&#128065; Visualizar</a>
+      {% endif %}
+      <button type="submit" form="postForm" name="acao" value="publicar" class="btn-primary">
+        &#8679; Publicar
+      </button>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <form id="postForm" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="editor-body">
+
+      <!-- Editor principal -->
+      <div class="editor-main">
+
+        <!-- Título -->
+        <div class="field-block">
+          <label for="titulo" class="field-label">Título do post</label>
+          <input
+            type="text"
+            id="titulo"
+            name="titulo"
+            class="title-input"
+            value="{{ post.titulo|default:'' }}"
+            maxlength="100"
+            placeholder="Digite o título do post..."
+            required
+          >
+          <div class="char-count">
+            <span id="charCount">{{ post.titulo|length|default:0 }}</span>/100
+          </div>
+        </div>
+
+        <!-- Toolbar do editor -->
+        <div class="field-block">
+          <label class="field-label">Conteúdo</label>
+          <div class="toolbar">
+            <select id="formatSelect" class="tb-select" onchange="formatBlock(this.value)">
+              <option value="p">Parágrafo</option>
+              <option value="h2">Título 2</option>
+              <option value="h3">Título 3</option>
+              <option value="h4">Título 4</option>
+            </select>
+            <div class="tb-sep"></div>
+            <button type="button" class="tb-btn" onclick="fmt('bold')" title="Negrito"><b>B</b></button>
+            <button type="button" class="tb-btn" onclick="fmt('italic')" title="Itálico"><i>I</i></button>
+            <button type="button" class="tb-btn" onclick="fmt('underline')" title="Sublinhado"><u>U</u></button>
+            <button type="button" class="tb-btn" onclick="fmt('strikeThrough')" title="Riscado"><s>S</s></button>
+            <div class="tb-sep"></div>
+            <button type="button" class="tb-btn" onclick="fmt('insertUnorderedList')" title="Lista">&#8226;&#8212;</button>
+            <button type="button" class="tb-btn" onclick="fmt('insertOrderedList')" title="Numerada">1.</button>
+            <button type="button" class="tb-btn" onclick="fmt('justifyLeft')" title="Esquerda">&#8676;</button>
+            <button type="button" class="tb-btn" onclick="fmt('justifyCenter')" title="Centro">&#8677;</button>
+            <div class="tb-sep"></div>
+            <button type="button" class="tb-btn" onclick="fmt('formatBlock', 'blockquote')" title="Citação">&#8220;&#8221;</button>
+            <button type="button" class="tb-btn" onclick="triggerImgUpload()" title="Imagem">&#128444;</button>
+            <div class="tb-sep"></div>
+            <button type="button" class="tb-btn" onclick="document.execCommand('undo')" title="Desfazer">&#8630;</button>
+            <button type="button" class="tb-btn" onclick="document.execCommand('redo')" title="Refazer">&#8631;</button>
+          </div>
+
+          <!-- Área editável -->
+          <div
+            id="editor"
+            class="content-area"
+            contenteditable="true"
+          >{{ post.conteudo|default:''|safe }}</div>
+
+          <!-- Input oculto para salvar o HTML do editor -->
+          <input type="hidden" name="conteudo" id="conteudoHidden">
+
+          <!-- Input oculto para imagens inseridas no editor -->
+          <input type="file" id="editorImgInput" accept="image/*" style="display:none" onchange="insertEditorImage(this)">
+
+          <div class="word-count">Palavras: <span id="wordCount">0</span></div>
+        </div>
+
+      </div>
+
+      <!-- Sidebar direita -->
+      <aside class="sidebar-right">
+
+        <!-- Publicação -->
+        <div class="side-section">
+          <h2 class="section-title">Publicação</h2>
+
+          <div class="field-group">
+            <label for="status">Status</label>
+            <select id="status" name="status" class="field-select">
+              <option value="rascunho" {% if not post or post.status == 'rascunho' %}selected{% endif %}>Rascunho</option>
+              <option value="publicado" {% if post.status == 'publicado' %}selected{% endif %}>Publicado</option>
+              <option value="agendado" {% if post.status == 'agendado' %}selected{% endif %}>Agendado</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label for="visibilidade">Visibilidade</label>
+            <select id="visibilidade" name="visibilidade" class="field-select">
+              <option value="publico" {% if not post or post.visibilidade == 'publico' %}selected{% endif %}>Público</option>
+              <option value="privado" {% if post.visibilidade == 'privado' %}selected{% endif %}>Privado</option>
+              <option value="senha" {% if post.visibilidade == 'senha' %}selected{% endif %}>Protegido por senha</option>
+            </select>
+          </div>
+
+          <div class="field-group" id="dataGroup" style="display:none">
+            <label for="publicar_em">Publicar em</label>
+            <input type="datetime-local" id="publicar_em" name="publicar_em"
+              class="field-select"
+              value="{{ post.publicar_em|date:'Y-m-d\TH:i'|default:'' }}">
+          </div>
+
+          <div class="field-group">
+            <label>
+              <input type="checkbox" id="toggleData" onchange="toggleDataField(this)">
+              Definir data e hora
+            </label>
+          </div>
+        </div>
+
+        <!-- Imagem destacada -->
+        <div class="side-section">
+          <h2 class="section-title">Imagem destacada</h2>
+
+          <div class="img-preview" id="imgPreviewWrap">
+            {% if post and post.imagem_destaque %}
+              <img id="imgPreview" src="{{ post.imagem_destaque.url }}" alt="Imagem destacada">
+            {% else %}
+              <div id="imgPlaceholder" class="img-placeholder">&#128444; Nenhuma imagem</div>
+              <img id="imgPreview" src="" alt="Imagem destacada" style="display:none">
+            {% endif %}
+          </div>
+
+          <div class="img-actions">
+            <label for="imagem_destaque" class="img-btn">Alterar imagem</label>
+            <input
+              type="file"
+              id="imagem_destaque"
+              name="imagem_destaque"
+              accept="image/*"
+              style="display:none"
+              onchange="previewImage(this)"
+            >
+            <button type="button" class="img-btn img-btn-icon" onclick="clearImage()" title="Remover">&#128465;</button>
+          </div>
+          <input type="hidden" name="remover_imagem" id="removerImagem" value="0">
+          <p class="img-hint">Recomendado: 1200x630px</p>
+        </div>
+
+        <!-- Salvar rascunho -->
+        <button type="submit" form="postForm" name="acao" value="rascunho" class="btn-save-draft">
+          Salvar rascunho
+        </button>
+
+      </aside>
+    </div>
+  </form>
+
+  <!-- Status bar -->
+  <div class="statusbar">
+    <span>PALAVRAS: <span id="wordCountBar">0</span></span>
+    <span>
+      {% if post and post.atualizado_em %}
+        SALVO ÀS {{ post.atualizado_em|date:"H:i" }}
+      {% else %}
+        NOVO POST
+      {% endif %}
+    </span>
+  </div>
+
+</div>
+
+
+<style>
+  .editor-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    font-family: 'Segoe UI', sans-serif;
+    background: #f5f5f3;
+    color: #1a1a1a;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    background: #fff;
+    border-bottom: 1px solid #e5e5e0;
+    flex-shrink: 0;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .back-btn { font-size: 13px; color: #666; text-decoration: none; display: flex; align-items: center; gap: 4px; }
+  .back-btn:hover { color: #1a1a1a; }
+  .post-meta h1 { font-size: 15px; font-weight: 600; margin: 0; }
+  .post-meta p { font-size: 12px; color: #888; margin: 2px 0 0; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .saved-badge { font-size: 12px; color: #22a06b; display: flex; align-items: center; gap: 4px; }
+
+  .btn-outline {
+    padding: 7px 14px;
+    border: 1px solid #d0d0c8;
+    border-radius: 8px;
+    font-size: 13px;
+    background: #fff;
+    color: #444;
+    text-decoration: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-outline:hover { background: #f5f5f3; }
+  .btn-primary {
+    padding: 7px 16px;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-primary:hover { background: #333; }
+  .btn-save-draft {
+    width: 100%;
+    padding: 9px;
+    border: 1px solid #d0d0c8;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 13px;
+    color: #444;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-save-draft:hover { background: #f5f5f3; }
+
+  .editor-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+  .editor-main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .field-block { display: flex; flex-direction: column; gap: 6px; }
+  .field-label { font-size: 12px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .title-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d0d0c8;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    background: #fff;
+    color: #1a1a1a;
+    outline: none;
+    box-sizing: border-box;
+  }
+  .title-input:focus { border-color: #6C47FF; }
+  .char-count { font-size: 11px; color: #aaa; text-align: right; margin-top: 4px; }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-wrap: wrap;
+    padding: 6px 10px;
+    background: #fff;
+    border: 1px solid #d0d0c8;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+  }
+  .tb-select {
+    border: 1px solid #d0d0c8;
+    border-radius: 6px;
+    font-size: 12px;
+    padding: 4px 6px;
+    background: #fff;
+    color: #1a1a1a;
+    font-family: inherit;
+  }
+  .tb-sep { width: 1px; height: 18px; background: #d0d0c8; margin: 0 3px; }
+  .tb-btn {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    border: none; background: none; border-radius: 5px;
+    cursor: pointer; color: #555; font-size: 13px; font-family: inherit;
+  }
+  .tb-btn:hover { background: #f0f0ec; color: #1a1a1a; }
+
+  .content-area {
+    min-height: 300px;
+    padding: 14px;
+    border: 1px solid #d0d0c8;
+    border-radius: 0 0 8px 8px;
+    background: #fff;
+    font-size: 14px;
+    line-height: 1.75;
+    color: #1a1a1a;
+    outline: none;
+  }
+  .content-area:focus { border-color: #6C47FF; }
+  .content-area blockquote {
+    border-left: 3px solid #6C47FF;
+    margin: 8px 0; padding: 6px 14px;
+    color: #555; font-style: italic;
+  }
+  .word-count { font-size: 11px; color: #aaa; margin-top: 5px; }
+
+  .sidebar-right {
+    width: 230px; min-width: 230px;
+    background: #fff;
+    border-left: 1px solid #e5e5e0;
+    overflow-y: auto;
+    padding: 18px;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  .side-section { border-bottom: 1px solid #e5e5e0; padding-bottom: 16px; }
+  .section-title { font-size: 13px; font-weight: 600; margin: 0 0 12px; }
+  .field-group { margin-bottom: 10px; }
+  .field-group label { display: block; font-size: 12px; color: #666; margin-bottom: 5px; }
+  .field-select {
+    width: 100%; padding: 7px 10px;
+    border: 1px solid #d0d0c8; border-radius: 8px;
+    font-size: 13px; background: #fff; color: #1a1a1a;
+    font-family: inherit; outline: none;
+  }
+  .field-select:focus { border-color: #6C47FF; }
+
+  .img-preview {
+    width: 100%; height: 90px;
+    border-radius: 8px; border: 1px solid #d0d0c8;
+    overflow: hidden; background: #f5f5f3; margin-bottom: 8px;
+  }
+  .img-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .img-placeholder {
+    display: flex; align-items: center; justify-content: center;
+    height: 100%; font-size: 12px; color: #aaa;
+  }
+  .img-actions { display: flex; gap: 6px; }
+  .img-btn {
+    flex: 1; padding: 6px 10px; font-size: 12px;
+    border: 1px solid #d0d0c8; border-radius: 8px;
+    background: none; color: #555; cursor: pointer;
+    text-align: center; font-family: inherit;
+  }
+  .img-btn:hover { background: #f5f5f3; }
+  .img-btn-icon { flex: 0; padding: 6px 10px; }
+  .img-hint { font-size: 11px; color: #aaa; margin-top: 6px; }
+
+  .statusbar {
+    display: flex; justify-content: space-between;
+    padding: 6px 24px;
+    background: #fff; border-top: 1px solid #e5e5e0;
+    font-size: 11px; color: #aaa; letter-spacing: 0.05em;
+    flex-shrink: 0;
+  }
+</style>
+
+<script>
+  // Contador de caracteres do título
+  const titleInput = document.getElementById('titulo');
+  const charCount = document.getElementById('charCount');
+  if (titleInput) {
+    titleInput.addEventListener('input', () => {
+      charCount.textContent = titleInput.value.length;
+    });
+  }
+
+  // Contador de palavras
+  function updateWordCount() {
+    const text = document.getElementById('editor').innerText || '';
+    const count = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+    document.getElementById('wordCount').textContent = count;
+    const bar = document.getElementById('wordCountBar');
+    if (bar) bar.textContent = count;
+  }
+  document.getElementById('editor').addEventListener('input', updateWordCount);
+  updateWordCount();
+
+  // Formatar texto
+  function fmt(cmd, val) {
+    document.execCommand(cmd, false, val || null);
+    document.getElementById('editor').focus();
+  }
+
+  // Formatar bloco
+  function formatBlock(tag) {
+    if (tag) document.execCommand('formatBlock', false, tag);
+    document.getElementById('editor').focus();
+  }
+
+  // Toggle campo de data
+  function toggleDataField(cb) {
+    document.getElementById('dataGroup').style.display = cb.checked ? 'block' : 'none';
+  }
+
+  // Preview da imagem destacada
+  function previewImage(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const preview = document.getElementById('imgPreview');
+        const placeholder = document.getElementById('imgPlaceholder');
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+        document.getElementById('removerImagem').value = '0';
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  // Remover imagem
+  function clearImage() {
+    const preview = document.getElementById('imgPreview');
+    const placeholder = document.getElementById('imgPlaceholder');
+    preview.src = '';
+    preview.style.display = 'none';
+    if (placeholder) placeholder.style.display = 'flex';
+    document.getElementById('imagem_destaque').value = '';
+    document.getElementById('removerImagem').value = '1';
+  }
+
+  // Inserir imagem no editor
+  function triggerImgUpload() {
+    document.getElementById('editorImgInput').click();
+  }
+  function insertEditorImage(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.execCommand('insertImage', false, e.target.result);
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  // Antes de enviar, copia HTML do editor para o campo oculto
+  document.getElementById('postForm').addEventListener('submit', function() {
+    document.getElementById('conteudoHidden').value = document.getElementById('editor').innerHTML;
+  });
+</script>
+{% endblock %}
