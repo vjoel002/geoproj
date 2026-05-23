@@ -1,20 +1,317 @@
 {% extends 'admin/base.html' %}
 
+{% block title %}Dashboard — Admin{% endblock %}
+
 {% block content %}
-    <h1>Bienvenue sur la page de dashboard</h1>
-    <p>Ceci est la page du tableau de bord de l'administrateur.</p>
+<div class="dash-layout">
 
-    {% for post in posts %}
-      <div>
-        <span>{{ post.titulo }}</span>
-        <a href="{% url 'editar_post' post.id %}">Editar</a>
+  <div class="dash-topbar">
+    <div>
+      <h1>Dashboard</h1>
+      <p>Visão geral do seu site</p>
+    </div>
+    <a href="{% url 'criar_post' %}" class="btn-primary">+ Novo Post</a>
+  </div>
 
-        <form method="POST" action="{% url 'deletar_post' post.id %}" style="display:inline"
-              onsubmit="return confirm('Tem certeza que quer deletar este post?')">
-          {% csrf_token %}
-          <button type="submit">Deletar</button>
-        </form>
+  <div class="dash-body">
+
+    <!-- Cards de resumo -->
+    <div class="cards-row">
+      <div class="card">
+        <div class="card-icon" style="background:#EEF2FF">&#128065;</div>
+        <div class="card-info">
+          <span class="card-value">{{ total_visitas }}</span>
+          <span class="card-label">Total de visitas</span>
+        </div>
       </div>
-    {% endfor %}
-{% endblock content %}
+      <div class="card">
+        <div class="card-icon" style="background:#FEF9C3">&#9728;</div>
+        <div class="card-info">
+          <span class="card-value">{{ visitas_hoje }}</span>
+          <span class="card-label">Visitas hoje</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:#F0FDF4">&#128221;</div>
+        <div class="card-info">
+          <span class="card-value">{{ posts|length }}</span>
+          <span class="card-label">Posts criados</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:#FFF1F2">&#9993;</div>
+        <div class="card-info">
+          <span class="card-value">{{ nao_lidas|default:0 }}</span>
+          <span class="card-label">Mensagens novas</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+
+      <!-- Gráfico de visitas -->
+      <div class="panel panel-wide">
+        <div class="panel-header">
+          <h2>Visitas nos últimos 30 dias</h2>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="visitasChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Por página -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Visitas por página</h2>
+        </div>
+        <div class="page-list">
+          {% for p in por_pagina %}
+            <div class="page-item">
+              <span class="page-name">{{ p.pagina }}</span>
+              <div class="page-bar-wrap">
+                <div class="page-bar" style="--w: {{ p.total|floatformat:0 }}px"></div>
+              </div>
+              <span class="page-count">{{ p.total }}</span>
+            </div>
+          {% empty %}
+            <p class="empty-msg">Nenhuma visita registrada.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Top países -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Top países</h2>
+        </div>
+        <div class="geo-list">
+          {% for p in top_paises %}
+            <div class="geo-item">
+              <span class="geo-name">{{ p.pais }}</span>
+              <span class="geo-count">{{ p.total }}</span>
+            </div>
+          {% empty %}
+            <p class="empty-msg">Sem dados de localização ainda.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Top cidades -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Top cidades</h2>
+        </div>
+        <div class="geo-list">
+          {% for c in top_cidades %}
+            <div class="geo-item">
+              <span class="geo-name">{{ c.cidade }}, {{ c.pais }}</span>
+              <span class="geo-count">{{ c.total }}</span>
+            </div>
+          {% empty %}
+            <p class="empty-msg">Sem dados de localização ainda.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Lista de posts -->
+      <div class="panel panel-wide">
+        <div class="panel-header">
+          <h2>Posts</h2>
+          <a href="{% url 'criar_post' %}" class="panel-link">+ Novo</a>
+        </div>
+        <table class="posts-table">
+          <thead>
+            <tr>
+              <th>Título</th>
+              <th>Status</th>
+              <th>Data</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for post in posts %}
+            <tr>
+              <td class="post-titulo">{{ post.titulo }}</td>
+              <td>
+                <span class="badge badge-{{ post.status }}">{{ post.get_status_display }}</span>
+              </td>
+              <td class="post-data">{{ post.criado_em|date:"d/m/Y" }}</td>
+              <td class="post-acoes">
+                <a href="{% url 'visualizar_post' post.id %}" class="action-btn">&#128065;</a>
+                <a href="{% url 'editar_post' post.id %}" class="action-btn">&#9998;</a>
+                <form method="POST" action="{% url 'deletar_post' post.id %}" style="display:inline"
+                      onsubmit="return confirm('Deletar este post?')">
+                  {% csrf_token %}
+                  <button type="submit" class="action-btn action-btn-del">&#128465;</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="empty-msg">Nenhum post ainda.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const labels = JSON.parse('{{ graf_labels|escapejs }}');
+  const data   = JSON.parse('{{ graf_data|escapejs }}');
+
+  const ctx = document.getElementById('visitasChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Visitas',
+        data: data,
+        borderColor: '#6C47FF',
+        backgroundColor: 'rgba(108,71,255,0.08)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#6C47FF',
+        fill: true,
+        tension: 0.4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } } }
+      }
+    }
+  });
+</script>
+
+<style>
+  .dash-layout {
+    display: flex; flex-direction: column;
+    min-height: 100vh;
+    font-family: 'Segoe UI', sans-serif;
+    background: #f5f5f3; color: #1a1a1a;
+  }
+
+  .dash-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 28px;
+    background: #fff; border-bottom: 1px solid #e5e5e0;
+  }
+  .dash-topbar h1 { font-size: 18px; font-weight: 700; margin: 0; }
+  .dash-topbar p  { font-size: 12px; color: #888; margin: 3px 0 0; }
+
+  .btn-primary {
+    padding: 8px 16px; background: #1a1a1a; color: #fff;
+    border-radius: 8px; font-size: 13px; font-weight: 600;
+    text-decoration: none;
+  }
+  .btn-primary:hover { background: #333; }
+
+  .dash-body { padding: 24px 28px; }
+
+  /* Cards */
+  .cards-row {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 16px; margin-bottom: 24px;
+  }
+  .card {
+    background: #fff; border: 1px solid #e5e5e0;
+    border-radius: 10px; padding: 18px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .card-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .card-value { display: block; font-size: 24px; font-weight: 700; line-height: 1; }
+  .card-label { display: block; font-size: 12px; color: #888; margin-top: 4px; }
+
+  /* Grid */
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .panel {
+    background: #fff; border: 1px solid #e5e5e0;
+    border-radius: 10px; padding: 20px;
+  }
+  .panel-wide { grid-column: span 2; }
+  .panel-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+  }
+  .panel-header h2 { font-size: 14px; font-weight: 600; margin: 0; }
+  .panel-link { font-size: 12px; color: #6C47FF; text-decoration: none; }
+  .panel-link:hover { text-decoration: underline; }
+
+  /* Gráfico */
+  .chart-wrap { height: 200px; }
+
+  /* Por página */
+  .page-list { display: flex; flex-direction: column; gap: 10px; }
+  .page-item { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .page-name { width: 100px; color: #555; flex-shrink: 0; }
+  .page-bar-wrap { flex: 1; background: #f0f0ec; border-radius: 4px; height: 8px; overflow: hidden; }
+  .page-bar { height: 8px; background: #6C47FF; border-radius: 4px; min-width: 4px; width: var(--w, 4px); }
+  .page-count { width: 30px; text-align: right; font-weight: 600; color: #1a1a1a; }
+
+  /* Geo */
+  .geo-list { display: flex; flex-direction: column; gap: 10px; }
+  .geo-item {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; padding: 8px 0;
+    border-bottom: 1px solid #f0f0ec;
+  }
+  .geo-item:last-child { border-bottom: none; }
+  .geo-name { color: #444; }
+  .geo-count { font-weight: 600; color: #1a1a1a; }
+
+  /* Tabela posts */
+  .posts-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .posts-table th {
+    text-align: left; font-size: 11px; font-weight: 600;
+    color: #888; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 0 10px 10px 0; border-bottom: 1px solid #e5e5e0;
+  }
+  .posts-table td { padding: 10px 10px 10px 0; border-bottom: 1px solid #f0f0ec; }
+  .posts-table tr:last-child td { border-bottom: none; }
+  .post-titulo { font-weight: 500; max-width: 300px; }
+  .post-data { color: #888; }
+
+  .badge {
+    font-size: 11px; font-weight: 600;
+    padding: 3px 9px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .badge-rascunho  { background: #fff3cd; color: #856404; }
+  .badge-publicado { background: #d1fae5; color: #065f46; }
+  .badge-agendado  { background: #dbeafe; color: #1e40af; }
+
+  .post-acoes { display: flex; align-items: center; gap: 6px; }
+  .action-btn {
+    width: 28px; height: 28px; border-radius: 6px;
+    border: 1px solid #e5e5e0; background: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 13px; color: #555; text-decoration: none; cursor: pointer;
+    font-family: inherit;
+  }
+  .action-btn:hover { background: #f5f5f3; }
+  .action-btn-del:hover { background: #fff0f0; border-color: #fca5a5; color: #b91c1c; }
+
+  .empty-msg { font-size: 13px; color: #aaa; text-align: center; padding: 20px 0; }
+</style>
+
+{% endblock %}
+
+
+
 

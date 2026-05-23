@@ -13,7 +13,7 @@ def blog(request):
 def sobre(request):
     return render(request, 'geo/sobre.html')
 
-def contato(request):
+'''def contato(request):
     if request.method == "POST":
         name = request.POST.get("name")
         email = request.POST.get("email")
@@ -21,7 +21,20 @@ def contato(request):
         message = request.POST.get("message")
         Contato.objects.create(name=name, email=email, phone=phone, message=message)
         return redirect("sucesso")
-    return render(request, 'geo/contato.html')
+    return render(request, 'geo/contato.html')'''
+
+def contato(request):
+    enviado = False
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone', '')
+        message = request.POST.get('message')
+        if email and message:
+            Contato.objects.create(name=name, email=email, phone=phone, message=message)
+            enviado = True
+            return redirect("sucesso")
+    return render(request, 'geo/contato.html', {'enviado': enviado})
 
 def sucesso(request):
     return render(request, 'geo/sucesso.html')

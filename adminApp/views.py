@@ -57,11 +57,17 @@ from django.shortcuts import render, redirect, get_object_or_404
 from adminApp.models import Admin, Post
 from django.contrib.auth.decorators import login_required
 from AppGeo.models import Contato
+from AppGeo.models import Visita
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Count
+from django.db.models.functions import TruncDate
+import json
 
-@login_required
+'''@login_required
 def admin_dashboard(request):
     posts = Post.objects.all().order_by('-id')
-    return render(request, 'admin/dashboard.html', {'posts': posts})
+    return render(request, 'admin/dashboard.html', {'posts': posts})'''
 
 def form_blog(request):
     return render(request, 'admin/formBlog.html')
@@ -159,7 +165,7 @@ def sobre(request):
     sobre = Sobre.objects.first()
     return render(request, 'sobre.html', {'sobre': sobre})
 
-
+# +++++++++++++++++++++++++++++++++ mensagem do contato +++++++++++++++++++++++++++++++++++
 @login_required
 def admin_mensagens(request):
     mensagens = Contato.objects.all()
@@ -168,10 +174,10 @@ def admin_mensagens(request):
     msg_detalhe = None
     if msg_id:
         msg_detalhe = get_object_or_404(Contato, id=msg_id)
-        if not msg_detalhe.lida:
-            msg_detalhe.lida = True
+        if not msg_detalhe.read:
+            msg_detalhe.read = True
             msg_detalhe.save()
-    nao_lidas = mensagens.filter(lida=False).count()
+    nao_lidas = mensagens.filter(read=False).count()
     return render(request, 'admin/admin_mensagens.html', {
         'mensagens': mensagens,
         'msg_detalhe': msg_detalhe,
@@ -185,3 +191,72 @@ def deletar_mensagem(request, msg_id):
     if request.method == 'POST':
         msg.delete()
     return redirect('admin_mensagens')
+
+
+@login_required
+def admin_dashboard(request):
+    posts = Post.objects.all().order_by('-id')
+
+    # Visitas dos últimos 30 dias
+    trinta_dias = timezone.now() - timedelta(days=30)
+    visitas_periodo = Visita.objects.filter(criado_em__gte=trinta_dias)
+
+    # Total geral
+    total_visitas = Visita.objects.count()
+
+    # Visitas hoje
+    hoje = timezone.now().date()
+    visitas_hoje = Visita.objects.filter(criado_em__date=hoje).count()
+
+    # Por página
+    por_pagina = (
+        Visita.objects.values('pagina')
+        .annotate(total=Count('id'))
+        .order_by('-total')
+    )
+
+    # Por dia (últimos 30 dias) — para o gráfico
+    por_dia = (
+        visitas_periodo
+        .annotate(dia=TruncDate('criado_em'))
+        .values('dia')
+        .annotate(total=Count('id'))
+        .order_by('dia')
+    )
+    #graf_labels = [str(v['dia']) for v in por_dia]
+    #graf_data   = [v['total'] for v in por_dia]
+
+    graf_labels = json.dumps([str(v['dia']) for v in por_dia])
+    graf_data   = json.dumps([v['total'] for v in por_dia])
+
+    # Top países
+    top_paises = (
+        Visita.objects.exclude(pais='')
+        .values('pais')
+        .annotate(total=Count('id'))
+        .order_by('-total')[:5]
+    )
+
+    # Top cidades
+    top_cidades = (
+        Visita.objects.exclude(cidade='')
+        .values('cidade', 'pais')
+        .annotate(total=Count('id'))
+        .order_by('-total')[:5]
+    )
+
+    return render(request, 'admin/dashboard.html', {
+        'posts': posts,
+        'total_visitas': total_visitas,
+        'visitas_hoje': visitas_hoje,
+        'por_pagina': por_pagina,
+        'graf_labels': graf_labels,
+        'graf_data': graf_data,
+        'top_paises': top_paises,
+        'top_cidades': top_cidades,
+    })
+
+
+
+
+

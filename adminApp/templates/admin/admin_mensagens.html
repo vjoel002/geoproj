@@ -21,13 +21,14 @@
     <div class="msgs-list">
       {% for msg in mensagens %}
         <a href="?id={{ msg.id }}"
-           class="msg-item {% if not msg.lida %}msg-unread{% endif %} {% if msg_detalhe and msg_detalhe.id == msg.id %}msg-active{% endif %}">
+           class="msg-item {% if not msg.read %}msg-unread{% endif %} {% if msg_detalhe and msg_detalhe.id == msg.id %}msg-active{% endif %}">
           <div class="msg-top">
+            <span class="msg-email">{{ msg.name }}</span>
             <span class="msg-email">{{ msg.email }}</span>
-            <span class="msg-date">{{ msg.criado_em|date:"d/m/Y" }}</span>
+            <span class="msg-date">{{ msg.created_in|date:"d/m/Y" }}</span>
           </div>
-          <div class="msg-preview">{{ msg.mensagem|truncatechars:60 }}</div>
-          {% if not msg.lida %}
+          <div class="msg-preview">{{ msg.message|truncatechars:60 }}</div>
+          {% if not msg.read %}
             <span class="unread-dot"></span>
           {% endif %}
         </a>
@@ -44,12 +45,13 @@
       {% if msg_detalhe %}
         <div class="detail-header">
           <div class="detail-info">
+            <h2>{{ msg_detalhe.name }}</h2>
             <h2>{{ msg_detalhe.email }}</h2>
             <div class="detail-meta">
-              {% if msg_detalhe.telefone %}
-                <span>&#128222; {{ msg_detalhe.telefone }}</span>
+              {% if msg_detalhe.phone %}
+                <span>&#128222; {{ msg_detalhe.phone }}</span>
               {% endif %}
-              <span>&#128197; {{ msg_detalhe.criado_em|date:"d \d\e F \d\e Y \à\s H:i" }}</span>
+              <span>&#128197; {{ msg_detalhe.created_in|date:"d \d\e F \d\e Y \à\s H:i" }}</span>
             </div>
           </div>
           <form method="POST" action="{% url 'deletar_mensagem' msg_detalhe.id %}"
@@ -59,7 +61,7 @@
           </form>
         </div>
         <div class="detail-body">
-          {{ msg_detalhe.mensagem|linebreaks }}
+          {{ msg_detalhe.message|linebreaks }}
         </div>
       {% else %}
         <div class="detail-empty">
