@@ -1,8 +1,10 @@
 {% extends 'geo/base.html' %}
 
 {% block content %}
-  <title>Contato</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+ {% block head %}
+    <title>Contato</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  {% endblock %}
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -20,10 +22,14 @@
       background: var(--bg);
       font-family: 'DM Sans', sans-serif;
       color: var(--ink);
+    }
+
+    .contato-page {
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 40px 20px;
+      min-height: calc(100vh - 50px); /* desconta a altura da nav */
     }
 
     /* Textura sutil no fundo */
@@ -241,73 +247,74 @@
   </style>
 </head>
 <body>
+<div class="contato-page">
+  <div class="wrapper">
 
-<div class="wrapper">
+    <!-- Esquerda -->
+    <div class="left-col">
+      <div>
+        <p class="left-tag">Fale comigo</p>
+        <h1 class="left-title">Vamos conversar?</h1>
+        <p class="left-desc">Estou disponível para projetos, colaborações ou apenas para trocar uma ideia. Preencha o formulário e responderei em breve.</p>
+      </div>
 
-  <!-- Esquerda -->
-  <div class="left-col">
-    <div>
-      <p class="left-tag">Fale comigo</p>
-      <h1 class="left-title">Vamos conversar?</h1>
-      <p class="left-desc">Estou disponível para projetos, colaborações ou apenas para trocar uma ideia. Preencha o formulário e responderei em breve.</p>
+      <div class="contact-info">
+        <div class="contact-item">
+          <div class="contact-icon">&#9993;</div>
+          <span>Respondo em até 24h</span>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">&#128222;</div>
+          <span>Disponível por telefone ou WhatsApp</span>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">&#127759;</div>
+          <span>Campo Grande, MS — Brasil</span>
+        </div>
+      </div>
     </div>
 
-    <div class="contact-info">
-      <div class="contact-item">
-        <div class="contact-icon">&#9993;</div>
-        <span>Respondo em até 24h</span>
-      </div>
-      <div class="contact-item">
-        <div class="contact-icon">&#128222;</div>
-        <span>Disponível por telefone ou WhatsApp</span>
-      </div>
-      <div class="contact-item">
-        <div class="contact-icon">&#127759;</div>
-        <span>Campo Grande, MS — Brasil</span>
-      </div>
+    <!-- Direita -->
+    <div class="right-col">
+      <h2 class="form-title">Envie uma mensagem</h2>
+      <p class="form-sub">Todos os campos marcados são obrigatórios.</p>
+
+      {% if enviado %}
+        <div class="success-box">
+          &#10003; Mensagem enviada! Entrarei em contato em breve.
+        </div>
+      {% endif %}
+
+      <form method="POST">
+        {% csrf_token %}
+
+        <div class="field-row">
+          <div class="field-group">
+            <label for="name">Nome *</label>
+            <input type="text" id="name" name="name" placeholder="Seu nome" required>
+          </div>
+          <div class="field-group">
+            <label for="email">E-mail *</label>
+            <input type="email" id="email" name="email" placeholder="seu@email.com" required>
+          </div>
+          <div class="field-group">
+            <label for="phone">Telefone</label>
+            <input type="text" id="phone" name="phone" placeholder="+55 (67) 9 9999-9999">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="message">Mensagem *</label>
+          <textarea id="message" name="message" rows="5"
+            placeholder="Escreva sua mensagem aqui..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn-submit">Enviar mensagem &#8594;</button>
+      </form>
+
+      <p class="form-note">Seus dados não serão compartilhados com terceiros.</p>
     </div>
+
   </div>
-
-  <!-- Direita -->
-  <div class="right-col">
-    <h2 class="form-title">Envie uma mensagem</h2>
-    <p class="form-sub">Todos os campos marcados são obrigatórios.</p>
-
-    {% if enviado %}
-      <div class="success-box">
-        &#10003; Mensagem enviada! Entrarei em contato em breve.
-      </div>
-    {% endif %}
-
-    <form method="POST">
-      {% csrf_token %}
-
-      <div class="field-row">
-        <div class="field-group">
-          <label for="name">Nome *</label>
-          <input type="text" id="name" name="name" placeholder="Seu nome" required>
-        </div>
-        <div class="field-group">
-          <label for="email">E-mail *</label>
-          <input type="email" id="email" name="email" placeholder="seu@email.com" required>
-        </div>
-        <div class="field-group">
-          <label for="phone">Telefone</label>
-          <input type="text" id="phone" name="phone" placeholder="+55 (67) 9 9999-9999">
-        </div>
-      </div>
-
-      <div class="field-group">
-        <label for="message">Mensagem *</label>
-        <textarea id="message" name="message" rows="5"
-          placeholder="Escreva sua mensagem aqui..." required></textarea>
-      </div>
-
-      <button type="submit" class="btn-submit">Enviar mensagem &#8594;</button>
-    </form>
-
-    <p class="form-note">Seus dados não serão compartilhados com terceiros.</p>
-  </div>
-
 </div>
 {% endblock content %}

@@ -1,27 +1,29 @@
 import httpx
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.http import StreamingHttpResponse, HttpResponse
-
 from AppGeo.models import Contato
+from adminApp.models import Sobre
+from adminApp.models import Post
+from django.core.paginator import Paginator
 
 def index(request):
     return render(request, 'geo/index.html')
 
 def blog(request):
-    return render(request, 'geo/blog.html')
+    todos_posts = Post.objects.filter(status='publicado').order_by('-criado_em')
+    paginator = Paginator(todos_posts, 6)
+    pagina_num = request.GET.get('page', 1)
+    posts = paginator.get_page(pagina_num)
+    return render(request, 'geo/blog.html', {'posts': posts})
+
+def post_detalhe(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    return render(request, 'geo/post_detalhe.html', {'post': post})
 
 def sobre(request):
-    return render(request, 'geo/sobre.html')
+    sobre = Sobre.objects.first()
+    return render(request, 'geo/sobre.html', {'sobre': sobre})
 
-'''def contato(request):
-    if request.method == "POST":
-        name = request.POST.get("name")
-        email = request.POST.get("email")
-        phone = request.POST.get("phone")
-        message = request.POST.get("message")
-        Contato.objects.create(name=name, email=email, phone=phone, message=message)
-        return redirect("sucesso")
-    return render(request, 'geo/contato.html')'''
 
 def contato(request):
     enviado = False

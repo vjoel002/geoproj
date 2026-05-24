@@ -100,6 +100,19 @@
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
+      color: var(--text);
+    }
+
+    a.nav-links {
+      text-decoration: none;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: .85rem;
+      font-weight: 500;
+      transition: color .3s;
+    }
+    .a.nav-links:hover {
+      color: var(--accent);
     }
     /*========================================= Menu ==================================-->*/
 
@@ -465,7 +478,7 @@
     <h1>GEO<span>IA</span> — Consultas Inteligentes</h1>
     <!-- ========================================= Menu ==================================-->
     <nav class="nav-links">
-      <div class="blog"><h1><a href="http://127.0.0.1:8000/blog/">BLOG</a></h1></div>
+      <div class="blog"><h1><a id="navega" href="http://127.0.0.1:8000/blog/">BLOG</a></h1></div>
       <div class="sobre"><h1><a href="http://127.0.0.1:8000/sobre/">SOBRE</a></h1></div>
       <div class="contato"><h1><a href="http://127.0.0.1:8000/contato/">CONTATO</a></h1></div>
     </nav>

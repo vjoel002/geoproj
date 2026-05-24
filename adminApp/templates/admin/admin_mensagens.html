@@ -38,6 +38,21 @@
           <p>Nenhuma mensagem ainda.</p>
         </div>
       {% endfor %}
+
+      <!-- Paginação -->
+      {% if mensagens.has_other_pages %}
+      <div class="pagination">
+        {% if mensagens.has_previous %}
+          <a href="?page={{ mensagens.previous_page_number }}{% if request.GET.id %}&id={{ request.GET.id }}{% endif %}" class="page-btn">&#8592;</a>
+        {% endif %}
+
+        <span class="page-info">{{ mensagens.number }} / {{ mensagens.paginator.num_pages }}</span>
+
+        {% if mensagens.has_next %}
+          <a href="?page={{ mensagens.next_page_number }}{% if request.GET.id %}&id={{ request.GET.id }}{% endif %}" class="page-btn">&#8594;</a>
+        {% endif %}
+      </div>
+      {% endif %}
     </div>
 
     <!-- Detalhe -->
@@ -97,6 +112,20 @@
   .msgs-body {
     display: flex; flex: 1; overflow: hidden;
   }
+
+  /* Paginação */
+  .pagination {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; padding: 12px;
+    border-top: 1px solid #e5e5e0;
+  }
+  .page-btn {
+    padding: 5px 12px; border: 1px solid #d0d0c8;
+    border-radius: 6px; font-size: 13px; color: #555;
+    text-decoration: none; background: #fff;
+  }
+  .page-btn:hover { background: #f5f5f3; }
+  .page-info { font-size: 12px; color: #888; }
 
   /* Lista */
   .msgs-list {

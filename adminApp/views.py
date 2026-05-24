@@ -63,6 +63,7 @@ from datetime import timedelta
 from django.db.models import Count
 from django.db.models.functions import TruncDate
 import json
+from django.core.paginator import Paginator
 
 '''@login_required
 def admin_dashboard(request):
@@ -168,7 +169,13 @@ def sobre(request):
 # +++++++++++++++++++++++++++++++++ mensagem do contato +++++++++++++++++++++++++++++++++++
 @login_required
 def admin_mensagens(request):
-    mensagens = Contato.objects.all()
+    todas_mensagens = Contato.objects.all()
+
+    # Paginação — 10 mensagens por página
+    paginator = Paginator(todas_mensagens, 10)
+    pagina_num = request.GET.get('page', 1)
+    mensagens = paginator.get_page(pagina_num)
+
     # Marcar como lida ao abrir o detalhe
     msg_id = request.GET.get('id')
     msg_detalhe = None
@@ -177,7 +184,8 @@ def admin_mensagens(request):
         if not msg_detalhe.read:
             msg_detalhe.read = True
             msg_detalhe.save()
-    nao_lidas = mensagens.filter(read=False).count()
+
+    nao_lidas = todas_mensagens.filter(read=False).count()
     return render(request, 'admin/admin_mensagens.html', {
         'mensagens': mensagens,
         'msg_detalhe': msg_detalhe,
