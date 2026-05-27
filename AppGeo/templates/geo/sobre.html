@@ -1,91 +1,13 @@
-{% extends 'geo/base.html' %}
+﻿{% extends 'geo/base.html' %}
+{% load static %}
 
 {% block head %}
 <title>Sobre — {{ sobre.nome|default:'Sobre mim' }}</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
 {% endblock %}
 
 {% block content %}
-<style>
-  .sobre-page {
-    font-family: 'Inter', sans-serif;
-    background: #F8F9FA;
-    min-height: 100vh;
-    padding: 48px 24px;
-  }
-
-  .sobre-card {
-    max-width: 680px;
-    margin: 0 auto;
-    background: #fff;
-    border: 1px solid #E5E7EB;
-    border-radius: 16px;
-    overflow: hidden;
-  }
-
-  .sobre-header {
-    background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
-    padding: 40px 40px 32px;
-    display: flex;
-    align-items: center;
-    gap: 28px;
-  }
-  .sobre-foto {
-    width: 100px; height: 100px; flex-shrink: 0;
-    border-radius: 50%;
-    border: 3px solid rgba(255,255,255,0.2);
-    overflow: hidden;
-    background: #2a2a4e;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .sobre-foto img { width: 100%; height: 100%; object-fit: cover; }
-  .sobre-foto-placeholder { font-size: 40px; color: rgba(255,255,255,0.3); }
-  .sobre-nome {
-    font-size: 24px; font-weight: 700;
-    color: #fff; margin: 0 0 4px;
-  }
-  .sobre-titulo {
-    font-size: 14px; color: rgba(255,255,255,0.6); margin: 0;
-  }
-
-  .sobre-body { padding: 32px 40px; }
-
-  .section { margin-bottom: 28px; }
-  .section:last-child { margin-bottom: 0; }
-  .section-label {
-    font-size: 11px; font-weight: 600;
-    letter-spacing: 0.1em; text-transform: uppercase;
-    color: #6366F1; margin-bottom: 10px;
-  }
-  .bio-text { font-size: 14px; line-height: 1.8; color: #374151; }
-
-  .contato-list { display: flex; flex-direction: column; gap: 10px; }
-  .contato-item {
-    display: flex; align-items: center; gap: 10px;
-    font-size: 14px; color: #374151;
-  }
-  .contato-icon {
-    width: 32px; height: 32px; border-radius: 8px;
-    background: #F3F4F6;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 15px; flex-shrink: 0;
-  }
-
-  .links-list { display: flex; flex-wrap: wrap; gap: 10px; }
-  .link-btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 8px 16px;
-    border: 1px solid #E5E7EB;
-    border-radius: 8px;
-    font-size: 13px; font-weight: 500;
-    color: #374151; text-decoration: none;
-    transition: background 0.15s;
-  }
-  .link-btn:hover { background: #F9FAFB; }
-  .link-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-
-  .divider { height: 1px; background: #F3F4F6; margin-bottom: 28px; }
-</style>
 
 <div class="sobre-page">
   <div class="sobre-card">
@@ -141,22 +63,22 @@
         <div class="links-list">
           {% if sobre.linkedin %}
             <a href="{{ sobre.linkedin }}" class="link-btn" target="_blank">
-              <span class="link-dot" style="background:#0A66C2"></span> LinkedIn
+              <span class="link-dot link-dot-linkedin"></span> LinkedIn
             </a>
           {% endif %}
           {% if sobre.github %}
             <a href="{{ sobre.github }}" class="link-btn" target="_blank">
-              <span class="link-dot" style="background:#24292F"></span> GitHub
+              <span class="link-dot link-dot-github"></span> GitHub
             </a>
           {% endif %}
           {% if sobre.lattes %}
             <a href="{{ sobre.lattes }}" class="link-btn" target="_blank">
-              <span class="link-dot" style="background:#337AB7"></span> Lattes
+              <span class="link-dot link-dot-lattes"></span> Lattes
             </a>
           {% endif %}
           {% if sobre.portfolio %}
             <a href="{{ sobre.portfolio }}" class="link-btn" target="_blank">
-              <span class="link-dot" style="background:#6C47FF"></span> Portfolio
+              <span class="link-dot link-dot-portfolio"></span> Portfolio
             </a>
           {% endif %}
         </div>
@@ -166,5 +88,4 @@
     </div>
   </div>
 </div>
-
 {% endblock %}

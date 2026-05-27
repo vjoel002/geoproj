@@ -1,19 +1,16 @@
-{% extends 'geo/base.html' %}
+﻿{% extends 'geo/base.html' %}
+{% load static %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/sucesso.css' %}">
+{% endblock head %}
 
 {% block content %}
 
-<div style="
-max-width: 600px;
-margin: 100px auto;
-padding: 40px;
-background: white;
-border-radius: 12px;
-text-align: center;
-box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-">
+<div class="sucesso-card">
 
-    <h1 style="font-size: 42px; color: green;">
-        ✓
+    <h1 class="sucesso-icon">
+        Ã¢Å“â€œ
     </h1>
 
     <h2>Mensagem enviada com sucesso!</h2>
@@ -22,17 +19,8 @@ box-shadow: 0 10px 30px rgba(0,0,0,0.08);
         Obrigado pelo contato. Responderei em breve.
     </p>
 
-    <a href="/"
-       style="
-       display:inline-block;
-       margin-top:20px;
-       padding:12px 24px;
-       background:#111;
-       color:white;
-       text-decoration:none;
-       border-radius:8px;
-       ">
-       Voltar ao início
+    <a href="/" class="sucesso-link">
+       Voltar ao inÃƒÂ­cio
     </a>
 
 </div>
