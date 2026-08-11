@@ -563,3 +563,147 @@ font-family: inherit;
   border-radius: 8px;
 }
 
+/* ====================================================simulação==================================================== */
+
+/**{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}*/
+
+
+
+.container{
+    width:100%;
+    max-width:600px;
+    background:white;
+    border-radius:20px;
+    padding:40px;
+    text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+}
+
+h1{
+    font-size:clamp(2rem,1vw,3rem);
+    color:#111827;
+    margin-bottom:15px;
+}
+
+p{
+    color:#6b7280;
+    margin-bottom:30px;
+    line-height:1.5;
+}
+
+.botoes{
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+}
+
+.btn{
+    text-decoration:none;
+    color:white;
+    padding:18px;
+    border-radius:12px;
+    font-size:1.1rem;
+    font-weight:600;
+    transition:.3s;
+}
+
+.btn:hover{
+    transform:translateY(-3px);
+}
+
+.btn1{
+    background:#2563eb;
+}
+
+.btn2{
+    background:#2563eb;
+}
+
+.btn3{
+    background:#2563eb;
+}
+.btn4{
+    background:#2563eb;
+}
+
+footer{
+    margin-top:30px;
+    color:#6b7280;
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.flag-icon {
+    width: 24px;
+    height: auto;
+    border-radius: 3px;
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-decoration: none;
+    color: white;
+    padding: 18px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: .3s;
+}
+
+.btn-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.arrow {
+    font-size: 1.4rem;
+    opacity: 0.85;
+}
+
+/* Tablet */
+@media (max-width:768px){
+
+    .container{
+        padding:30px;
+    }
+
+    .btn{
+        padding:16px;
+        font-size:1rem;
+    }
+}
+
+/* Celular */
+@media (max-width:480px){
+
+    .container{
+        padding:25px 20px;
+        border-radius:15px;
+    }
+
+    h1{
+        font-size:2rem;
+    }
+
+    p{
+        font-size:0.95rem;
+    }
+
+    .btn{
+        padding:14px;
+        font-size:0.95rem;
+    }
+}

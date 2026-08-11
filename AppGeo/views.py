@@ -41,6 +41,9 @@ def contato(request):
 def sucesso(request):
     return render(request, 'geo/sucesso.html')
 
+def simulacao(request):
+    return render(request, 'geo/simulacao.html')
+
 # +++++++++++++++++++++++++++++++++ Vanna AI +++++++++++++++++++++++++++++++++++
 
 def proxy_geojson_stream(request):

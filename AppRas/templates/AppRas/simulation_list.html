@@ -1,0 +1,21 @@
+{% extends "geo/base.html" %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 24px auto;">
+  <h2>Simulações de Inundação Disponíveis</h2>
+  <ul style="list-style:none; padding:0;">
+    {% for sim in simulations %}
+      <li style="padding:14px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+        <a href="{% url 'AppRas:simulation_viewer' sim.pk %}" style="font-size:1.1em; font-weight:600;">
+          {{ sim.name }}
+        </a>
+        <div style="color:#666; font-size:0.9em;">
+          {{ sim.timesteps.count }} timesteps — criado em {{ sim.created_at|date:"d/m/Y" }}
+        </div>
+      </li>
+    {% empty %}
+      <p>Nenhuma simulação processada ainda. Faça upload pelo admin.</p>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'AppGeo',
     'corsheaders',
     'adminApp',
+    'AppRas',
 ]
 
 MIDDLEWARE = [

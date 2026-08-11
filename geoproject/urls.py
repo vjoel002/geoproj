@@ -24,5 +24,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('AppGeo.urls')),
     path('', include('adminApp.urls')),
+    path('flood/', include("AppRas.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) # para servir arquivos de mídia em desenvolvimento
 

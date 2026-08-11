@@ -2,7 +2,7 @@ from ipware import get_client_ip
 from django.contrib.gis.geoip2 import GeoIP2
 from .models import Visita
 
-PAGINAS_MONITORADAS = ['/', '/blog/', '/sobre/', '/contato/']
+PAGINAS_MONITORADAS = ['/', '/blog/', '/sobre/', '/contato/', '/simulacao/']
 
 class VisitaMiddleware:
     def __init__(self, get_response):
