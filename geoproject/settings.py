@@ -39,12 +39,23 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'daphne',
     'django.contrib.staticfiles',
+    'channels',
     'AppGeo',
     'corsheaders',
     'adminApp',
     'AppRas',
 ]
+
+ASGI_APPLICATION = "geoproject.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [("127.0.0.1", 6379)]},
+    }
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -88,8 +99,8 @@ WSGI_APPLICATION = 'geoproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'adminbanco',
-        'USER': 'postgres',
+        'NAME': 'IBGEData',
+        'USER': 'postgres_local',
         'PASSWORD': 'postgres',
         'HOST': 'localhost',
         'PORT': '5432',
@@ -137,3 +148,7 @@ STATIC_URL = 'static/'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/admin_dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+
+CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"

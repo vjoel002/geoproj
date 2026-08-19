@@ -1,0 +1,7 @@
+[2026-08-19T02:09:27.254601+00:00] [vjoel002] importar_simulacao "/mnt/c/Users/joelv/Desktop/temp/PROJET/ComHec/newfolde1" "nome do barragem"
+[2026-08-19T02:36:46.611910+00:00] [vjoel002] importar_simulacao "/mnt/c/Users/joelv/Desktop/temp/PROJET/ComHec/newfolde1" "nome do barragem" "Cenário de chuva intensa, cota máxima 120m"
+[2026-08-19T02:37:41.609971+00:00] [vjoel002] importar_simulacao "/mnt/c/Users/joelv/Desktop/temp/PROJET/ComHec/newfolde1" "nome do barragem" "Cenário de chuva intensa, cota máxima 120m"
+[2026-08-19T02:40:38.323850+00:00] [vjoel002] importar_simulacao "/mnt/c/Users/joelv/Desktop/temp/PROJET/ComHec/newfolde1" "Barragem Itaipu" "Cenário de chuva intensa, cota máxima 120m"
+[2026-08-19T03:09:36.889545+00:00] [vjoel002] cls
+[2026-08-19T03:09:41.399079+00:00] [vjoel002] clear
+[2026-08-19T03:10:51.068309+00:00] [vjoel002] sair

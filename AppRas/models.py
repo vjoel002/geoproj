@@ -5,6 +5,7 @@ Coloque este arquivo dentro do app `AppRas` (AppRas/models.py).
 """
 from django.db import models
 from django.urls import reverse
+from django.utils.text import slugify
 
 
 class FloodSimulation(models.Model):
@@ -120,3 +121,6 @@ class FloodTimestep(models.Model):
             [self.bounds_south, self.bounds_west],
             [self.bounds_north, self.bounds_east],
         ]
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+

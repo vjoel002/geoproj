@@ -4,7 +4,7 @@ Mapper) para uma FloodSimulation, criando os FloodTimestep e disparando
 o processamento automaticamente.
 
 Uso:
-    python manage.py import_flood_simulation --folder "C:/caminho/para/export_rasmapper" --name "Cheia Rio X - Abril 2025"
+    python manage.py import_flood_simulation --folder "C:/caminho/para/export_rasmapper" --name "Cheia Rio X - Abril 2025" --description "Cenário de chuva intensa, cota máxima 120m"
 """
 import glob
 import os
@@ -30,6 +30,10 @@ class Command(BaseCommand):
             help="Nome da simulação a ser criada"
         )
         parser.add_argument(
+            "--description", default="",
+            help="Descrição opcional da simulação (contexto, cenário, cota, etc)"
+        )
+        parser.add_argument(
             "--pattern", default="Depth*.tif",
             help="Padrão glob dos arquivos (default: Depth*.tif, cobre variações como 'Depth__...' ou 'Depth (...)...')"
         )
@@ -37,6 +41,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         folder = options["folder"]
         name = options["name"]
+        description = options["description"]
         pattern = options["pattern"]
 
         if not os.path.isdir(folder):
@@ -48,11 +53,21 @@ class Command(BaseCommand):
 
         self.stdout.write(f"Encontrados {len(files)} arquivo(s).")
 
-        simulation, created = FloodSimulation.objects.get_or_create(name=name)
+        simulation, created = FloodSimulation.objects.get_or_create(
+            name=name,
+            defaults={"description": description},
+        )
         if created:
             self.stdout.write(self.style.SUCCESS(f"Simulação '{name}' criada."))
         else:
             self.stdout.write(f"Usando simulação existente '{name}'.")
+            # Se a simulação já existia e uma descrição nova foi passada,
+            # atualiza — assim dá pra corrigir/completar a descrição depois
+            # rodando o import de novo com o mesmo --name.
+            if description and simulation.description != description:
+                simulation.description = description
+                simulation.save(update_fields=["description"])
+                self.stdout.write("Descrição atualizada.")
 
         imported = 0
         for filepath in files:

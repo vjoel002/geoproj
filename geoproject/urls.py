@@ -19,6 +19,8 @@ from django.urls import path, include
 # para que Django serve as imagens em desenvolvimento
 from django.conf import settings     
 from django.conf.urls.static import static
+from django.conf import settings
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,3 +29,5 @@ urlpatterns = [
     path('flood/', include("AppRas.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) # para servir arquivos de mídia em desenvolvimento
 
+if settings.DEBUG:
+    urlpatterns += staticfiles_urlpatterns()

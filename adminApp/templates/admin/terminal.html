@@ -1,0 +1,41 @@
+{% extends "admin/base.html" %}
+{% load static %}
+{# Ajuste o extends acima para o template base real do seu painel #}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'adminApp/vendor/xterm/css/xterm.min.css' %}">
+
+<h2>Terminal — AppRas</h2>
+<p style="color:#a00; font-size: 0.9em;">
+  Acesso de shell completo ao servidor. Use com cuidado.
+</p>
+
+<div id="terminal" style="height: 70vh; background:#000; padding:8px; border-radius:6px;"></div>
+
+<script src="{% static 'adminApp/vendor/xterm/js/xterm.min.js' %}"></script>
+<script src="{% static 'adminApp/vendor/xterm/js/xterm-addon-fit.min.js' %}"></script>
+<script>
+  const term = new Terminal({ cursorBlink: true, fontSize: 14 });
+  const fitAddon = new FitAddon.FitAddon();
+  term.loadAddon(fitAddon);
+  term.open(document.getElementById('terminal'));
+  fitAddon.fit();
+
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+  const socket = new WebSocket(`${protocol}://${window.location.host}/ws/admin/terminal/`);
+
+  socket.onmessage = (event) => term.write(event.data);
+  socket.onopen = () => {
+    // envia o tamanho inicial assim que conecta
+    socket.send(`\x01RESIZE:${term.cols}:${term.rows}`);
+  };
+  socket.onclose = () => term.write("\r\n\r\n[conexão encerrada]\r\n");
+
+  term.onData((data) => socket.send(data));
+
+  window.addEventListener('resize', () => {
+    fitAddon.fit();
+    socket.send(`\x01RESIZE:${term.cols}:${term.rows}`);
+  });
+</script>
+{% endblock %}

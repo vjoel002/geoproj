@@ -168,8 +168,8 @@
     "Rótulos (satélite)": satelliteLabels,
   };
 
-  // Inicia no mapa de Ruas (mesmo comportamento de antes)
-  baseLayers["Ruas"].addTo(map);
+  // Inicia no mapa de Satélite (mesmo comportamento de antes)
+  baseLayers["Satélite"].addTo(map);
   L.control.layers(baseLayers, overlayLayers, { collapsed: false }).addTo(map);
 
   let timesteps = [];
