@@ -29,11 +29,12 @@
 <body>
   <nav class="nav">
     <a href="{% url 'index' %}">Home</a>
-    <a href="{% url 'simulacao' %}">Simulação</a>
+    <a href="{% url 'AppRas:simulation_list' %}">Listar Simulações</a>
     <a href="{% url 'admin_dashboard' %}">Dashboard</a>
     <a href="{% url 'criar_post' %}">Blog</a>
     <a href="{% url 'admin_sobre' %}">Sobre</a>
     <a href="{% url 'admin_mensagens' %}">Mensagens</a>
+    <a href="{% url 'admin_terminal' %}">Terminal</a>
 
     {% if user.is_authenticated %}
       <div class="nav-logout">

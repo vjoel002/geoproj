@@ -5,12 +5,12 @@
 {% block content %}
 <link rel="stylesheet" href="{% static 'adminApp/vendor/xterm/css/xterm.min.css' %}">
 
-<h2>Terminal — AppRas</h2>
-<p style="color:#a00; font-size: 0.9em;">
-  Acesso de shell completo ao servidor. Use com cuidado.
+<h2 style="color: #0a06f3; font-size: 1.7em; text-align: center">Terminal restrito</h2>
+<p style="color:#a00; font-size: 0.9em; text-align: center; margin-bottom: 16px;">
+  Acesso de shell completo ao servidor. 
 </p>
 
-<div id="terminal" style="height: 70vh; background:#000; padding:8px; border-radius:6px;"></div>
+<div id="terminal" style="height: 70vh; background:#000; padding:8px; border-radius:6px; width: 80%; margin: 0 auto;"></div>
 
 <script src="{% static 'adminApp/vendor/xterm/js/xterm.min.js' %}"></script>
 <script src="{% static 'adminApp/vendor/xterm/js/xterm-addon-fit.min.js' %}"></script>

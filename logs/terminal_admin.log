@@ -5,3 +5,5 @@
 [2026-08-19T03:09:36.889545+00:00] [vjoel002] cls
 [2026-08-19T03:09:41.399079+00:00] [vjoel002] clear
 [2026-08-19T03:10:51.068309+00:00] [vjoel002] sair
+[2026-08-20T02:59:13.839057+00:00] [vjoel002] importar_simulacao "/mnt/c/Users/joelv/Desktop/temp/PROJET/ComHec/newfolde1" "Barragem Itaipu" "Cenário de chuva intensa, cota máxima 120m"
+[2026-08-20T03:00:54.410252+00:00] [vjoel002] importar_simulacao "/mnt/c/Users/joelv/Desktop/temp/PROJET/ComHec/newfolde1" "Barragem Itaipu test" "Cenário de chuva intensa, cota máxima 120m"

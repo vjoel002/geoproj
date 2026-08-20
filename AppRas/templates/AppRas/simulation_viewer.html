@@ -96,6 +96,17 @@
     border-radius: 3px;
     background: linear-gradient(to right, #a8d5e5, #5ab4d6, #2c7fb8, #225ea8, #253494, #1a1a6e, #3d0b5e);
   }
+    .map-instructions {
+    background: #fff8e1;
+    border-left: 4px solid #e6a817;
+    padding: 8px 12px;
+    font-size: 0.82em;
+    line-height: 1.4;
+    color: #01001b;
+    max-width: 220px;
+    border-radius: 4px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.2);
+  }
 </style>
 {% endblock %}
 
@@ -171,6 +182,20 @@
   // Inicia no mapa de Satélite (mesmo comportamento de antes)
   baseLayers["Satélite"].addTo(map);
   L.control.layers(baseLayers, overlayLayers, { collapsed: false }).addTo(map);
+
+    // Aviso fixo no canto superior esquerdo do mapa
+  const InstructionsControl = L.Control.extend({
+    options: { position: 'topleft' },
+    onAdd: function () {
+      const div = L.DomUtil.create('div', 'map-instructions');
+      div.innerHTML =
+        '1 - Antes de dar ou tirar zoom, dê pausa primeiro na simulação.<br>' +
+        '2 - Se ficar piscando, dê refresh na página (ou aperte F5) e dê play de novo.';
+      L.DomEvent.disableClickPropagation(div);
+      return div;
+    },
+  });
+  map.addControl(new InstructionsControl());
 
   let timesteps = [];
   let currentOverlay = null;  // overlay visível agora
