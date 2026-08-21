@@ -9,6 +9,9 @@ from django.core.paginator import Paginator
 def index(request):
     return render(request, 'geo/index.html')
 
+def dados_vetoriais(request):
+    return render(request, 'geo/dados_vetoriais.html')
+
 def blog(request):
     todos_posts = Post.objects.filter(status='publicado').order_by('-criado_em')
     paginator = Paginator(todos_posts, 6)

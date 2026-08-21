@@ -1,56 +1,231 @@
 :root {
---nav-height: 44px;
+    --nav-height: 50px;
+}
+
+/* Reset básico */
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
 }
 
 body {
-margin: 0;
-font-family: 'Segoe UI', sans-serif;
+    font-family: 'Segoe UI', sans-serif;
 }
 
-main {
-padding-top: var(--nav-height);
+/* Header não ocupa espaço no fluxo,
+   pois o menu é fixed */
+header {
+    margin: 0;
+    padding: 0;
+    height: 0;
 }
 
+/* Menu principal */
 .nav {
-display: flex;
-align-items: center;
-gap: 16px;
-position: fixed;
-top: 0;
-left: 0;
-right: 0;
-z-index: 1000;
-box-sizing: border-box;
-height: var(--nav-height);
-padding: 12px 24px;
-background: #1a1a1a;
-border-bottom: 1px solid #333;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+
+    z-index: 1000;
+
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--nav-height);
+
+    margin: 0;
+    padding: 0 24px;
+
+    background: #1a1a1a;
+    border-bottom: 1px solid #333;
 }
 
 .nav a {
-color: #ccc;
-text-decoration: none;
-font-size: 13px;
+    color: #ccc;
+    text-decoration: none;
+    font-size: 13px;
 }
 
-.nav a:hover { color: #fff; }
+.nav a:hover {
+    color: #fff;
+}
 
 .nav-logout {
-margin-left: auto;
+    margin-left: auto;
 }
 
 .nav-logout button {
-background: none;
-border: 1px solid #555;
-color: #ccc;
-padding: 5px 12px;
-border-radius: 6px;
-font-size: 13px;
-cursor: pointer;
-font-family: inherit;
+    background: none;
+    border: 1px solid #555;
+    color: #ccc;
+
+    padding: 5px 12px;
+    border-radius: 6px;
+
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
 }
 
-.nav-logout button:hover { background: #333; color: #fff; }
+.nav-logout button:hover {
+    background: #333;
+    color: #fff;
+}
+
+/*
+ * Conteúdo da página
+ *
+ * O menu é fixed, portanto precisamos reservar
+ * exatamente a altura dele.
+ */
+main {
+    width: 100%;
+    margin: 0;
+    padding: var(--nav-height) 0 0 0;
+}
+
+/*
+ * Home
+ *
+ * Garante que o hero comece imediatamente
+ * depois do espaço reservado para o menu.
+ */
+.home-hero {
+    margin: 0;
+}
+
+/* ====================================================Home==================================================== */
+
+  .home-hero {
+    position: relative;
+    overflow: hidden;
+    background: #0b141f;
+    color: #eaf2f7;
+    padding: 72px 24px 56px;
+  }
+
+  .contour-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .contour-bg path {
+      animation: contour-drift 34s linear infinite;
+    }
+    .contour-bg path:nth-child(2) { animation-duration: 42s; animation-direction: reverse; }
+    .contour-bg path:nth-child(3) { animation-duration: 50s; }
+    .contour-bg path:nth-child(4) { animation-duration: 38s; animation-direction: reverse; }
+    .contour-bg path:nth-child(5) { animation-duration: 60s; }
+    @keyframes contour-drift {
+      from { transform: translateX(0); }
+      to { transform: translateX(-160px); }
+    }
+  }
+
+  .home-hero-inner {
+    position: relative;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+
+  .home-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: #7e93a6;
+    margin: 0 0 18px;
+  }
+
+  .home-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: clamp(32px, 5vw, 48px);
+    line-height: 1.1;
+    margin: 0 0 18px;
+    color: #f4f9fc;
+  }
+
+  .home-subtitle {
+    font-family: 'Source Serif 4', serif;
+    font-size: 18px;
+    line-height: 1.6;
+    color: #b9cbd8;
+    max-width: 58ch;
+    margin: 0;
+  }
+
+  .home-grid-section {
+    background: #0e1a27;
+    padding: 8px 24px 72px;
+  }
+
+  .home-grid {
+    max-width: 880px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .home-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #101d2c;
+    border-left: 3px solid var(--card-accent, #2c7fb8);
+    border-radius: 0 8px 8px 0;
+    padding: 20px 20px 22px;
+    text-decoration: none;
+    transition: background 0.15s, transform 0.15s;
+  }
+  .home-card:hover {
+    background: #142639;
+    transform: translateY(-2px);
+  }
+
+  .home-card-icon {
+    width: 22px;
+    height: 22px;
+    stroke: var(--card-accent, #2c7fb8);
+    fill: none;
+    stroke-width: 1.6;
+  }
+
+  .home-card-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: #f4f9fc;
+    margin: 0;
+  }
+
+  .home-card-desc {
+    font-family: 'Source Serif 4', serif;
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: #9fb2c2;
+    margin: 0;
+    flex-grow: 1;
+  }
+
+  .home-card-link {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--card-accent, #2c7fb8);
+    letter-spacing: 0.02em;
+  }
 
 /* ====================================================Blog==================================================== */
 

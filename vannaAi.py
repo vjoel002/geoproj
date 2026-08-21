@@ -36,7 +36,7 @@ DB_CONFIG = dict(
     host="localhost",
     port=5432,
     database="IBGEData",
-    user="postgres",
+    user="postgres_local",
     password="postgres",
 )
 
