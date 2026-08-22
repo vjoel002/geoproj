@@ -3,33 +3,19 @@
 }
 
 /* Reset básico */
-html,
-body {
-    margin: 0;
-    padding: 0;
+.site-header {
+    display: block;
     width: 100%;
-    min-height: 100%;
-}
-
-body {
-    font-family: 'Segoe UI', sans-serif;
-}
-
-/* Header não ocupa espaço no fluxo,
-   pois o menu é fixed */
-header {
     margin: 0;
     padding: 0;
-    height: 0;
+    line-height: 0;
 }
 
-/* Menu principal */
 .nav {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-
     z-index: 1000;
 
     display: flex;
@@ -38,7 +24,7 @@ header {
 
     box-sizing: border-box;
     width: 100%;
-    height: var(--nav-height);
+    height: 8%;   
 
     margin: 0;
     padding: 0 24px;
@@ -65,10 +51,8 @@ header {
     background: none;
     border: 1px solid #555;
     color: #ccc;
-
     padding: 5px 12px;
     border-radius: 6px;
-
     font-size: 13px;
     cursor: pointer;
     font-family: inherit;
@@ -77,28 +61,6 @@ header {
 .nav-logout button:hover {
     background: #333;
     color: #fff;
-}
-
-/*
- * Conteúdo da página
- *
- * O menu é fixed, portanto precisamos reservar
- * exatamente a altura dele.
- */
-main {
-    width: 100%;
-    margin: 0;
-    padding: var(--nav-height) 0 0 0;
-}
-
-/*
- * Home
- *
- * Garante que o hero comece imediatamente
- * depois do espaço reservado para o menu.
- */
-.home-hero {
-    margin: 0;
 }
 
 /* ====================================================Home==================================================== */
@@ -235,7 +197,7 @@ main {
     min-height: calc(100vh - var(--nav-height));
     padding: 0 24px 48px;
   }
-  .blog-inner { max-width: 780px; margin: 0 auto; }
+  .blog-inner { max-width: 780px; margin: 40 auto; }
   .blog-header { margin-bottom: 36px; }
   .blog-header h1 { font-size: 28px; font-weight: 700; color: #1a1a2e; margin: 0 0 6px; }
   .blog-header p  { font-size: 14px; color: #6B7280; margin: 0; }
@@ -327,7 +289,7 @@ main {
 
   .sobre-card {
     max-width: 680px;
-    margin: 0 auto;
+    margin: 40 auto;
     background: #fff;
     border: 1px solid #E5E7EB;
     border-radius: 16px;
@@ -740,112 +702,33 @@ main {
 
 /* ====================================================simulação==================================================== */
 
-/**{
+*{
     margin:0;
     padding:0;
     box-sizing:border-box;
     font-family:'Segoe UI',sans-serif;
-}*/
-
-
-
+}
 .container{
     width:100%;
-    max-width:600px;
-    background:white;
+    background:rgb(237, 237, 240);
     border-radius:20px;
     padding:40px;
     text-align:center;
     box-shadow:0 10px 30px rgba(0,0,0,.2);
-}
 
-h1{
-    font-size:clamp(2rem,1vw,3rem);
-    color:#111827;
-    margin-bottom:15px;
+    max-width: 800px; 
+    margin: 70 auto; 
+    margin-bottom: 200;
 }
-
 p{
     color:#6b7280;
     margin-bottom:30px;
     line-height:1.5;
 }
 
-.botoes{
-    display:flex;
-    flex-direction:column;
-    gap:15px;
-}
-
-.btn{
-    text-decoration:none;
-    color:white;
-    padding:18px;
-    border-radius:12px;
-    font-size:1.1rem;
-    font-weight:600;
-    transition:.3s;
-}
-
-.btn:hover{
-    transform:translateY(-3px);
-}
-
-.btn1{
-    background:#2563eb;
-}
-
-.btn2{
-    background:#2563eb;
-}
-
-.btn3{
-    background:#2563eb;
-}
-.btn4{
-    background:#2563eb;
-}
-
 footer{
-    margin-top:30px;
+    margin-bottom:0px;
     color:#6b7280;
-}
-
-.btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-
-.flag-icon {
-    width: 24px;
-    height: auto;
-    border-radius: 3px;
-}
-
-.btn {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    text-decoration: none;
-    color: white;
-    padding: 18px;
-    border-radius: 12px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    transition: .3s;
-}
-
-.btn-content {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.arrow {
-    font-size: 1.4rem;
-    opacity: 0.85;
 }
 
 /* Tablet */
@@ -853,11 +736,6 @@ footer{
 
     .container{
         padding:30px;
-    }
-
-    .btn{
-        padding:16px;
-        font-size:1rem;
     }
 }
 
@@ -868,17 +746,56 @@ footer{
         padding:25px 20px;
         border-radius:15px;
     }
-
-    h1{
-        font-size:2rem;
-    }
-
     p{
         font-size:0.95rem;
     }
+}
 
-    .btn{
-        padding:14px;
-        font-size:0.95rem;
-    }
+/* ====================================================footer==================================================== */
+
+.site-footer {
+  background: #1a1a1a;
+  border-top: 1px solid #333;
+  padding: 24px;
+}
+
+.footer-inner {
+  max-width: 880px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.footer-brand {
+  font-size: 13px;
+  color: #ccc;
+}
+
+.footer-links {
+  display: flex;
+  gap: 16px;
+}
+
+.footer-links a {
+  color: #ccc;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.footer-links a:hover {
+  color: #fff;
+}
+
+.footer-copy {
+  font-size: 12px;
+  color: #777;
+}
+.site-footer {
+  background: #1a1a1a;
+  border-top: 1px solid #333;
+  padding: 24px;
+  margin-top: 0; /* sobrescreve o footer{margin-top:30px} genérico */
 }

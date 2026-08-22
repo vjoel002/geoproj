@@ -9,9 +9,20 @@
     {% block head %}{% endblock head %}
 </head>
 <body>
-    <header>
+    <!-- <header class="site-header">
         <nav class="nav">
             <a href="{% url 'index' %}">Home</a>
+            <a href="{% url 'dados_vetoriais' %}">Dados Vetoriais</a>
+            <a href="{% url 'AppRas:simulation_list' %}">Simulações hidráulicas</a>
+            <a href="{% url 'blog' %}">Blog</a>
+            <a href="{% url 'sobre' %}">Sobre</a>
+            <a href="{% url 'contato' %}">Contato</a>
+        </nav>
+    </header>-->
+
+    <header class="site-header">
+        <nav class="nav">
+            <a href="{% url 'index' %}">Início</a>
             <a href="{% url 'dados_vetoriais' %}">Dados Vetoriais</a>
             <a href="{% url 'AppRas:simulation_list' %}">Simulações hidráulicas</a>
             <a href="{% url 'blog' %}">Blog</a>
@@ -22,6 +33,17 @@
     <main>
         {% block content %}{% endblock content %}
     </main>
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <span class="footer-brand">Geoprocessamento &amp; Simulação Hidráulica</span>
+            <nav class="footer-links">
+                <a href="{% url 'index' %}">Início</a>
+                <a href="{% url 'sobre' %}">Sobre</a>
+                <a href="{% url 'contato' %}">Contato</a>
+            </nav>
+            <span class="footer-copy">&copy; {% now "Y" %} Todos os direitos reservados.</span>
+        </div>
+    </footer>
 </body>
 </html>
 
