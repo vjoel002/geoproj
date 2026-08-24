@@ -3,25 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-
+    <title>Eclair Tec</title>
+    <link rel="icon" type="image/png" href="{% static 'img/logo_transparente.png' %}"> 
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     {% block head %}{% endblock head %}
 </head>
 <body>
-    <!-- <header class="site-header">
-        <nav class="nav">
-            <a href="{% url 'index' %}">Home</a>
-            <a href="{% url 'dados_vetoriais' %}">Dados Vetoriais</a>
-            <a href="{% url 'AppRas:simulation_list' %}">Simulações hidráulicas</a>
-            <a href="{% url 'blog' %}">Blog</a>
-            <a href="{% url 'sobre' %}">Sobre</a>
-            <a href="{% url 'contato' %}">Contato</a>
-        </nav>
-    </header>-->
-
     <header class="site-header">
         <nav class="nav">
+            <a href="{% url 'index' %}" class="nav-brand">
+                <svg width="50" height="50" color="blue" viewBox="0 0 24 24" fill="none" stroke="#5bc8ff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="nav-logo">
+                    <path d="M21.4 9.3l1-.3-.3-1.2-1 .1a3.8 3.8 0 0 0-.6-.6l.1-1-1.2-.3-.5.9a4 4 0 0 0-.9 0l-.5-.9-1.2.3.1 1a3.8 3.8 0 0 0-.6.6l-1-.1-.3 1.2 1 .3a4 4 0 0 0 0 .9l-1 .3.3 1.2 1-.1c.2.2.4.4.6.6l-.1 1 1.2.3.5-.9a4 4 0 0 0 .9 0l.5.9 1.2-.3-.1-1c.2-.2.4-.4.6-.6l1 .1.3-1.2-1-.3a4 4 0 0 0 0-.9z" stroke-width="1.1"/>
+                    <path d="M8.5 3.3a5.5 5.5 0 0 0-3 10.1c.6.5 1 1.2 1 2v.1h5v-.1c0-.8.4-1.5 1-2a5.5 5.5 0 0 0-4-10.1z"/>
+                    <path d="M6.5 17.5h4"/>
+                    <path d="M7 20h3"/>
+                </svg>
+                <svg width="140" height="24" viewBox="0 0 140 24">
+                    <text x="0" y="17" font-family="Arial, sans-serif" font-size="16" font-weight="700"
+                        fill="none" stroke="#5bc8ff" stroke-width="0.8">
+                        Eclair Tec
+                    </text>
+                </svg>
+            </a>
+
             <a href="{% url 'index' %}">Início</a>
             <a href="{% url 'dados_vetoriais' %}">Dados Vetoriais</a>
             <a href="{% url 'AppRas:simulation_list' %}">Simulações hidráulicas</a>
@@ -35,13 +39,12 @@
     </main>
     <footer class="site-footer">
         <div class="footer-inner">
-            <span class="footer-brand">Geoprocessamento &amp; Simulação Hidráulica</span>
-            <nav class="footer-links">
-                <a href="{% url 'index' %}">Início</a>
-                <a href="{% url 'sobre' %}">Sobre</a>
-                <a href="{% url 'contato' %}">Contato</a>
-            </nav>
+            <span class="footer-brand">TI | Geoprocessamento | Modelagem e Simulação Numérica</span>
+
             <span class="footer-copy">&copy; {% now "Y" %} Todos os direitos reservados.</span>
+
+            <span class="footer-brand">Eclair Tec - Tecnologia e Inovação</span>
+
         </div>
     </footer>
 </body>

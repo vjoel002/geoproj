@@ -3,14 +3,14 @@
 {% block content %}
 <div class="container">
   <h2>Simulações de Inundação Disponíveis</h2>
-  <ul style="list-style:none; padding:0;">
+  <ul>
     {% for sim in simulations %}
-      <li style="padding:14px; margin-bottom:10px; border:1px solid #c3bad4; border-radius:8px;">
-        <a href="{% url 'AppRas:simulation_viewer' sim.pk %}" style="font-size:1.1em; font-weight:600;">
+      <li class="simulation-item">
+        <a href="{% url 'AppRas:simulation_viewer' sim.pk %}">
           {{ sim.name }}
         </a>
-        <div style="color:#666; font-size:0.9em;">
-          {{ sim.timesteps.count }} timesteps — criado em {{ sim.created_at|date:"d/m/Y" }}
+        <div class="simulation-meta">
+          {{ sim.timesteps.count }} timesteps — criado em {{ sim.created_at|date:"d/m/Y" }}      
         </div>
       </li>
     {% empty %}

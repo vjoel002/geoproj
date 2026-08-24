@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GeoIA — Consultas Inteligentes IBGE</title>
+  <link rel="icon" type="image/png" href="{% static 'img/logo_transparente.png' %}"> 
+  <title>Eclair Tec</title>
 
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
@@ -17,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="{% static 'css/index.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dados_vetoriais.css' %}">
 </head>
 <body>
   <div id="loading">
@@ -26,11 +27,26 @@
   </div>
 
   <header>
-    <div class="logo-mark"></div>
-    <h1>GEO<span>IA</span> — Consultas Inteligentes</h1>
+    <!--<div class="logo-mark"></div>-->
+    <!--<h1>GEO<span>IA</span> — Consultas Inteligentes</h1>-->
+    <a href="{% url 'index' %}" class="nav-brand">
+      <svg width="50" height="50" color="blue" viewBox="0 0 24 24" fill="none" stroke="#5bc8ff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="nav-logo">
+          <path d="M21.4 9.3l1-.3-.3-1.2-1 .1a3.8 3.8 0 0 0-.6-.6l.1-1-1.2-.3-.5.9a4 4 0 0 0-.9 0l-.5-.9-1.2.3.1 1a3.8 3.8 0 0 0-.6.6l-1-.1-.3 1.2 1 .3a4 4 0 0 0 0 .9l-1 .3.3 1.2 1-.1c.2.2.4.4.6.6l-.1 1 1.2.3.5-.9a4 4 0 0 0 .9 0l.5.9 1.2-.3-.1-1c.2-.2.4-.4.6-.6l1 .1.3-1.2-1-.3a4 4 0 0 0 0-.9z" stroke-width="1.1"/>
+          <path d="M8.5 3.3a5.5 5.5 0 0 0-3 10.1c.6.5 1 1.2 1 2v.1h5v-.1c0-.8.4-1.5 1-2a5.5 5.5 0 0 0-4-10.1z"/>
+          <path d="M6.5 17.5h4"/>
+          <path d="M7 20h3"/>
+      </svg>
+      <svg width="140" height="24" viewBox="0 0 140 24">
+          <text x="0" y="17" font-family="Arial, sans-serif" font-size="16" font-weight="700"
+              fill="none" stroke="#5bc8ff" stroke-width="0.8">
+              Eclair Tec
+          </text>
+      </svg>
+  </a>
     <!-- ========================================= Menu ==================================-->
     <nav class="nav-links">
-      <div class="blog"><h1><a id="navega" href="http://127.0.0.1:8000/simulacao/" style="color: white; text-decoration: none;">SIMULAÇÕES HIDRÁULICAS</a></h1></div>
+      <div class="blog"><h1><a id="navega" href="http://127.0.0.1:8000" style="color: white; text-decoration: none;">INÍCIO</a></h1></div>
+      <div class="blog"><h1><a id="navega" href="http://127.0.0.1:8000/flood/" style="color: white; text-decoration: none;">SIMULAÇÕES HIDRÁULICAS</a></h1></div>
       <div class="blog"><h1><a id="navega" href="http://127.0.0.1:8000/blog/" style="color: white; text-decoration: none;">BLOG</a></h1></div>
       <div class="sobre"><h1><a href="http://127.0.0.1:8000/sobre/" style="color: white; text-decoration: none;">SOBRE</a></h1></div>
       <div class="contato"><h1><a href="http://127.0.0.1:8000/contato/" style="color: white; text-decoration: none;">CONTATO</a></h1></div>
@@ -76,6 +92,6 @@
 
   <div id="map"></div>
 
-<script src="{% static 'js/index.js' %}"></script>
+<script src="{% static 'js/dados_vetoriais.js' %}"></script>
 </body>
 </html>

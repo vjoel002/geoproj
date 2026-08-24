@@ -221,8 +221,10 @@ async function sendQuestion() {
     ansEl.innerHTML = `
       ${escHtml(data.answer)}
       <div style="margin-top:8px">
+        <!-- 
         <div class="sql-pill" title="Clique para copiar" onclick="copyText(this, \`${escAttr(data.sql)}\`)">${escHtml(data.sql)}</div>
-      </div>
+        -->
+        </div>
     `;
 
     // Gráfico (se disponível)
