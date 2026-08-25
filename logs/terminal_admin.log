@@ -7,3 +7,9 @@
 [2026-08-19T03:10:51.068309+00:00] [vjoel002] sair
 [2026-08-20T02:59:13.839057+00:00] [vjoel002] importar_simulacao "/mnt/c/Users/joelv/Desktop/temp/PROJET/ComHec/newfolde1" "Barragem Itaipu" "Cenário de chuva intensa, cota máxima 120m"
 [2026-08-20T03:00:54.410252+00:00] [vjoel002] importar_simulacao "/mnt/c/Users/joelv/Desktop/temp/PROJET/ComHec/newfolde1" "Barragem Itaipu test" "Cenário de chuva intensa, cota máxima 120m"
+[2026-08-25T02:06:29.920362+00:00] [vjoel002] list(FloodSimulation.objects.values_list("id", "name"))
+[2026-08-25T02:09:29.164884+00:00] [vjoel002] status
+[2026-08-25T02:16:59.281985+00:00] [vjoel002] deletar_simulacao 1
+[2026-08-25T02:17:17.497501+00:00] [vjoel002] deletar_simulacao 1
+[2026-08-25T02:20:05.952902+00:00] [vjoel002] deletar_simulacao 1
+[2026-08-25T02:20:36.207867+00:00] [vjoel002] deletar_simulacao 1

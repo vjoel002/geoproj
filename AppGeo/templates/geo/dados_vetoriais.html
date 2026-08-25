@@ -45,11 +45,11 @@
   </a>
     <!-- ========================================= Menu ==================================-->
     <nav class="nav-links">
-      <div class="blog"><h1><a id="navega" href="http://127.0.0.1:8000" style="color: white; text-decoration: none;">INÍCIO</a></h1></div>
-      <div class="blog"><h1><a id="navega" href="http://127.0.0.1:8000/flood/" style="color: white; text-decoration: none;">SIMULAÇÕES HIDRÁULICAS</a></h1></div>
-      <div class="blog"><h1><a id="navega" href="http://127.0.0.1:8000/blog/" style="color: white; text-decoration: none;">BLOG</a></h1></div>
-      <div class="sobre"><h1><a href="http://127.0.0.1:8000/sobre/" style="color: white; text-decoration: none;">SOBRE</a></h1></div>
-      <div class="contato"><h1><a href="http://127.0.0.1:8000/contato/" style="color: white; text-decoration: none;">CONTATO</a></h1></div>
+      <div class="blog"><h1><a id="navega" href="{% url 'index' %}" style="color: white; text-decoration: none;">INÍCIO</a></h1></div>
+      <div class="blog"><h1><a id="navega" href="{% url 'AppRas:simulation_list' %}" style="color: white; text-decoration: none;">SIMULAÇÕES HIDRÁULICAS</a></h1></div>
+      <div class="blog"><h1><a id="navega" href="{% url 'blog' %}" style="color: white; text-decoration: none;">BLOG</a></h1></div>
+      <div class="sobre"><h1><a href="{% url 'sobre' %}" style="color: white; text-decoration: none;">SOBRE</a></h1></div>
+      <div class="contato"><h1><a href="{% url 'contato' %}" style="color: white; text-decoration: none;">CONTATO</a></h1></div>
     </nav>
     <!-- ========================================= Menu ==================================-->
     <div class="header-right">

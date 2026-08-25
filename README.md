@@ -20,6 +20,14 @@ python manage.py import_flood_simulation --folder "/caminho" --name "Cheia AUG 2
 # Terminal do projeto (http://127.0.0.1:8000/terminal/) - Local / WSL
 importar_simulacao "/mnt/c/Users/joelv/Desktop/temp/PROJET/ComHec/newfolde1" "Barragem Itaipu" "Cenário de chuva intensa, cota máxima 120m"
 
+# ver simulações com os ID
+status
+
+# deletar uma simulação (deletar_simulacao ID)
+deletar_simulacao 1
+
+
+
 # Quando estiver em produção
 importar_simulacao "<caminho_da_pasta_no_servidor>" "<nome da barragem>" "<descrição>"
 importar_simulacao "/opt/render/project/src/uploads/newfolder1" "Cheia AUG 2026" "Cenário de chuva intensa"

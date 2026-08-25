@@ -74,6 +74,20 @@ def cmd_importar_simulacao(args):
     subprocess.run(comando, check=False)
 
 
+def cmd_deletar_simulacao(args):
+    if len(args) != 1 or not args[0].isdigit():
+        print("uso: deletar_simulacao <id>")
+        print("exemplo: deletar_simulacao 3   (use 'status' pra ver os ids)")
+        return
+
+    # subprocess.run herda stdin/stdout, então a confirmação
+    # interativa do management command funciona normalmente aqui.
+    subprocess.run(
+        [PYTHON, MANAGE_PY, "deletar_simulacao", args[0]],
+        check=False,
+    )
+
+
 def cmd_status(args):
     subprocess.run([PYTHON, MANAGE_PY, "status_simulacoes"], check=False)
 
@@ -87,7 +101,11 @@ def cmd_ajuda(args):
 COMANDOS = {
     "importar_simulacao": (
         cmd_importar_simulacao,
-        'importa uma simulação a partir de uma pasta com os GeoTIFFs: importar_simulacao <pasta> "<nome>"',
+        'importa uma simulação a partir de uma pasta com os GeoTIFFs: importar_simulacao <pasta> "<nome>" ["<descrição>"]',
+    ),
+    "deletar_simulacao": (
+        cmd_deletar_simulacao,
+        "apaga uma simulação pelo id (com confirmação): deletar_simulacao <id>",
     ),
     "status": (cmd_status, "lista as simulações cadastradas e quantos timesteps cada uma tem"),
     "ajuda": (cmd_ajuda, "mostra esta ajuda"),
