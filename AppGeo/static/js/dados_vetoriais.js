@@ -3,9 +3,10 @@ const API_BASE    = "http://localhost:8001";
 const STREAM_URL  = "http://localhost:8000/geojson/municipios/stream?tolerance=0.005";
 
 // ── Mapa ──────────────────────────────────────────────────────────────────────
-const map = L.map("map", { zoomControl: true, attributionControl: false });
-L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-  maxZoom: 19, subdomains: "abcd"
+const map = L.map("map", { zoomControl: true, attributionControl: true });
+L.tileLayer("https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?key=" + encodeURIComponent(window.CARTO_KEY || ""), {
+  maxZoom: 19,
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attribution/">CARTO</a>'
 }).addTo(map);
 
 const styleDefault = { color:"#1a3a55", weight:0.8, opacity:0.6, fillColor:"#1a3a55", fillOpacity:0.12 };

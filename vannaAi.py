@@ -97,7 +97,7 @@ from fastapi.responses import FileResponse
 
 @app.get("/app")
 def serve_index():
-    return FileResponse(r"C:\Users\joelv\Desktop\temp\PROJET\myproject\AppGeo\templates\geo\index.html")
+    return FileResponse(os.path.join(os.path.dirname(os.path.abspath(__file__)), "AppGeo", "templates", "geo", "index.html"))
 # ==============================================================================================
 
 # ─────────────────────────────────────────────────────────────────────────────

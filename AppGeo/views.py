@@ -13,7 +13,7 @@ def index(request):
     return render(request, 'geo/index.html')
 
 def dados_vetoriais(request):
-    return render(request, 'geo/dados_vetoriais.html')
+    return render(request, 'geo/dados_vetoriais.html', {'carto_key': os.environ.get('CARTO_KEY', '')})
 
 def blog(request):
     todos_posts = Post.objects.filter(status='publicado').order_by('-criado_em')
