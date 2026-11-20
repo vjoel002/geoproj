@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgis/postgis:17-3.5
+    env_file: .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+
+  web:
+    build: .
+    image: geodjango-app
+    env_file: .env
+    command: sh -c "python manage.py migrate && daphne -b 0.0.0.0 -p 8000 geoproject.asgi:application"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    image: geodjango-app
+    env_file: .env
+    command: celery -A geoproject worker -l info
+    depends_on:
+      - web
+      - redis
+
+  vanna:
+    image: geodjango-app
+    env_file: .env
+    command: python vannaAi.py
+    ports:
+      - "8001:8001"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

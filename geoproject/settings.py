@@ -50,10 +50,21 @@ INSTALLED_APPS = [
 
 ASGI_APPLICATION = "geoproject.asgi.application"
 
-CHANNEL_LAYERS = {
+"""CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {"hosts": [("127.0.0.1", 6379)]},
+    }
+}"""
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(
+                os.environ.get("REDIS_HOST", "127.0.0.1"),
+                int(os.environ.get("REDIS_PORT", "6379")),
+            )],
+        },
     }
 }
 
@@ -96,7 +107,7 @@ WSGI_APPLICATION = 'geoproject.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
+"""DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'IBGEData',
@@ -104,6 +115,17 @@ DATABASES = {
         'PASSWORD': 'postgres',
         'HOST': 'localhost',
         'PORT': '5432',
+    }
+}"""
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME', 'IBGEData'),
+        'USER': os.environ.get('DB_USER', 'postgres_local'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 
@@ -150,5 +172,15 @@ LOGIN_REDIRECT_URL = '/admin_dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
 
 
-CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
-CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
+'''CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"'''
+
+_REDIS_URL = "redis://{}:{}/0".format(
+    os.environ.get("REDIS_HOST", "127.0.0.1"),
+    os.environ.get("REDIS_PORT", "6379"),
+)
+CELERY_BROKER_URL = _REDIS_URL
+CELERY_RESULT_BACKEND = _REDIS_URL
+
+
+

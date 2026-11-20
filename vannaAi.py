@@ -1,3 +1,4 @@
+import os
 import asyncio
 import uuid
 
@@ -25,7 +26,7 @@ import json
 # LLM
 # ─────────────────────────────────────────────────────────────────────────────
 llm = OpenAILlmService(
-    api_key="REMOVED_OPENAI_KEY",
+    api_key=os.environ["OPENAI_API_KEY"],
     model="gpt-4",
 )
 
@@ -33,7 +34,7 @@ llm = OpenAILlmService(
 # Banco de dados (Vanna tool)
 # ─────────────────────────────────────────────────────────────────────────────
 DB_CONFIG = dict(
-    host="localhost",
+    host=os.environ.get("DB_HOST", "localhost"),
     port=5432,
     database="IBGEData",
     user="postgres_local",
@@ -112,7 +113,7 @@ def get_conn():
 from openai import AsyncOpenAI
 
 _openai_client = AsyncOpenAI(
-    api_key="REMOVED_OPENAI_KEY",
+    api_key=os.environ["OPENAI_API_KEY"],
 )
 OPENAI_MODEL = "gpt-4o-mini"   # rápido e barato; troque por "gpt-4o" se quiser mais precisão
 

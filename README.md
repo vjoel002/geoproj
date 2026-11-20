@@ -151,6 +151,19 @@ psql -U postgres_local -d NomeDoBanco -h localhost
 sudo service redis-server start
 redis-cli ping
 celery -A geoproject worker -l info
+```
 
+# rodar o projeto via docker
+```bash
+docker compose up -d
 
+docker compose ps              # vê o que está rodando
+docker compose logs -f web     # acompanha os logs (Ctrl+C sai sem derrubar)
+docker compose stop            # para tudo, mantendo os dados do banco
+docker compose down            # remove os containers (o volume pgdata continua)
+
+# Quando mudar o código Python (vannaAi.py, views.py, etc.), a imagem precisa ser reconstruída, porque o código é copiado para dentro dela
+
+docker compose up -d --build
+```
 

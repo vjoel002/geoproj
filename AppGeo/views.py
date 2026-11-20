@@ -1,4 +1,7 @@
 import httpx
+import os
+
+VANNA_URL = os.environ.get("VANNA_URL", "http://localhost:8001")
 from django.shortcuts import get_object_or_404, redirect, render
 from django.http import StreamingHttpResponse, HttpResponse
 from AppGeo.models import Contato
@@ -51,7 +54,7 @@ def simulacao(request):
 
 def proxy_geojson_stream(request):
     tolerance = request.GET.get("tolerance", "0.005")
-    url = f"http://localhost:8001/geojson/municipios/stream?tolerance={tolerance}"
+    url = f"{VANNA_URL}/geojson/municipios/stream?tolerance={tolerance}"
 
     def generate():
         with httpx.stream("GET", url) as r:
@@ -61,7 +64,7 @@ def proxy_geojson_stream(request):
     return StreamingHttpResponse(generate(), content_type="application/geo+json")
 
 def proxy_shapefile(request, cd_mun):
-    url = f"http://localhost:8001/download/shapefile/{cd_mun}"
+    url = f"{VANNA_URL}/download/shapefile/{cd_mun}"
     resp = httpx.get(url)
     response = HttpResponse(resp.content, content_type="application/zip")
     response["Content-Disposition"] = resp.headers.get("Content-Disposition", "")
