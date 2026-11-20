@@ -28,6 +28,13 @@ SECRET_KEY = 'django-insecure-r&8njsr*2k@693s)!dfuy$xk513c99o4*tmbgq*4kj2a8sabu!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# O padrão do Django é "same-origin", que faz o navegador NÃO mandar o
+# header Referer para outros sites — e os servidores de tiles do
+# OpenStreetMap bloqueiam (403 "Access blocked") pedidos sem Referer.
+# Este valor é o padrão dos navegadores: manda só o domínio (sem o
+# caminho da página) para outros sites.
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
 ALLOWED_HOSTS = []
 
 

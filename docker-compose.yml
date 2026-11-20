@@ -18,6 +18,11 @@ services:
     image: geodjango-app
     env_file: .env
     command: sh -c "python manage.py migrate && daphne -b 0.0.0.0 -p 8000 geoproject.asgi:application"
+    volumes:
+      # Arquivos enviados/gerados (GeoTIFFs e PNGs das simulações) ficam
+      # na pasta media/ do projeto, e não dentro do container — senão
+      # somem toda vez que o container é recriado (docker compose up --build).
+      - ./media:/app/media
     ports:
       - "8000:8000"
     depends_on:
@@ -30,6 +35,8 @@ services:
     image: geodjango-app
     env_file: .env
     command: celery -A geoproject worker -l info
+    volumes:
+      - ./media:/app/media
     depends_on:
       - web
       - redis

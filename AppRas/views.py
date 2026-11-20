@@ -2,6 +2,8 @@
 views.py — Página do viewer (mapa + player) e API JSON que alimenta o
 JavaScript com a lista de timesteps (URL do PNG + bounds + timestamp).
 """
+import os
+
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 
@@ -60,3 +62,91 @@ def simulation_timesteps_api(request, pk):
         ],
     }
     return JsonResponse(data)
+
+
+# --- Upload remoto de simulações -------------------------------------
+#
+# Permite enviar uma simulação a partir de qualquer PC (ex: script
+# PowerShell enviar_simulacao.ps1) sem precisar que a pasta exista no
+# servidor. O cliente manda um .zip com os Depth*.tif; o servidor
+# extrai numa pasta temporária e roda o import_flood_simulation.
+#
+# Autenticação: header "Authorization: Bearer <token>", onde o token é
+# a variável de ambiente SIMULACOES_UPLOAD_TOKEN (defina no .env).
+
+import fnmatch
+import hmac
+import io
+import tempfile
+import zipfile
+
+from django.core.management import CommandError, call_command
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
+
+def _token_valido(request):
+    esperado = os.environ.get("SIMULACOES_UPLOAD_TOKEN", "")
+    if not esperado:
+        return False
+    recebido = request.headers.get("Authorization", "")
+    if not recebido.startswith("Bearer "):
+        return False
+    return hmac.compare_digest(recebido[len("Bearer "):].strip(), esperado)
+
+
+@csrf_exempt
+@require_POST
+def simulation_upload_api(request):
+    if not _token_valido(request):
+        return JsonResponse({"ok": False, "erro": "token inválido ou ausente"}, status=401)
+
+    nome = (request.POST.get("nome") or "").strip()
+    descricao = (request.POST.get("descricao") or "").strip()
+    arquivo = request.FILES.get("arquivo")
+    if not nome or arquivo is None:
+        return JsonResponse(
+            {"ok": False, "erro": "campos obrigatórios: 'arquivo' (.zip) e 'nome'"}, status=400
+        )
+
+    saida = io.StringIO()
+    with tempfile.TemporaryDirectory(prefix="upload_sim_") as pasta:
+        try:
+            with zipfile.ZipFile(arquivo) as zf:
+                extraidos = 0
+                for info in zf.infolist():
+                    if info.is_dir():
+                        continue
+                    # Usa só o nome do arquivo (ignora subpastas do zip),
+                    # o que também impede path traversal ("../../etc").
+                    base = os.path.basename(info.filename.replace("\\", "/"))
+                    if not fnmatch.fnmatch(base.lower(), "depth*.tif"):
+                        continue
+                    with zf.open(info) as src, open(os.path.join(pasta, base), "wb") as dst:
+                        while chunk := src.read(1024 * 1024):
+                            dst.write(chunk)
+                    extraidos += 1
+        except zipfile.BadZipFile:
+            return JsonResponse({"ok": False, "erro": "arquivo enviado não é um .zip válido"}, status=400)
+
+        if extraidos == 0:
+            return JsonResponse(
+                {"ok": False, "erro": "nenhum arquivo Depth*.tif encontrado no .zip"}, status=400
+            )
+
+        try:
+            call_command(
+                "import_flood_simulation",
+                folder=pasta, name=nome, description=descricao,
+                stdout=saida, stderr=saida, no_color=True,
+            )
+        except CommandError as exc:
+            return JsonResponse({"ok": False, "erro": str(exc), "log": saida.getvalue()}, status=400)
+
+    simulacao = FloodSimulation.objects.filter(name=nome).first()
+    return JsonResponse({
+        "ok": True,
+        "id": simulacao.pk if simulacao else None,
+        "url": f"/flood/{simulacao.pk}/" if simulacao else None,
+        "log": saida.getvalue(),
+    })

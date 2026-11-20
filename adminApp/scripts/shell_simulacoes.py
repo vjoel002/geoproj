@@ -13,9 +13,13 @@ strings de comando por concatenação, então não dá pra escapar pra um
 
 import os
 import pathlib
+import secrets
 import shlex
+import shutil
 import subprocess
 import sys
+import tempfile
+import time
 
 try:
     import readline  # noqa: F401  (habilita histórico/edição de linha no Linux)
@@ -39,6 +43,15 @@ PYTHON = sys.executable
 LOG_FILE = str(_RAIZ_PROJETO / "logs" / "terminal_admin.log")
 
 USUARIO = os.environ.get("ADMIN_TERMINAL_USER", "desconhecido")
+
+# Pasta onde o navegador deposita os arquivos enviados pelo comando
+# enviar_simulacao. Tem que ser a MESMA usada pela view de upload
+# (adminApp/views_terminal.py) — as duas rodam no mesmo servidor.
+UPLOAD_ROOT = os.environ.get(
+    "ADMIN_TERMINAL_UPLOAD_ROOT",
+    os.path.join(tempfile.gettempdir(), "appras_uploads"),
+)
+UPLOAD_TIMEOUT_S = 30 * 60
 
 
 def log(linha):
@@ -64,7 +77,9 @@ def cmd_importar_simulacao(args):
     descricao = args[2] if len(args) == 3 else None
 
     if not os.path.isdir(pasta):
-        print(f"pasta não encontrada: {pasta}")
+        print(f"pasta não encontrada no servidor: {pasta}")
+        print("  Este terminal roda no SERVIDOR e não enxerga as pastas do seu PC.")
+        print('  Para mandar uma pasta do seu PC, use: enviar_simulacao "<nome>" ["<descrição>"]')
         return
 
     print(f"Importando '{nome}' a partir de {pasta}...")
@@ -72,6 +87,73 @@ def cmd_importar_simulacao(args):
     if descricao:
         comando += ["--description", descricao]
     subprocess.run(comando, check=False)
+
+
+def _avisar_navegador(acao, valor=""):
+    """
+    Manda uma sequência OSC invisível pro xterm.js da página do terminal
+    (ver terminal.html). É assim que a shell pede pro navegador abrir o
+    seletor de pasta, já que só o navegador consegue ler arquivos do PC.
+    """
+    sys.stdout.write(f"\x1b]7777;{acao};{valor}\x07")
+    sys.stdout.flush()
+
+
+def cmd_enviar_simulacao(args):
+    if len(args) not in (1, 2):
+        print('uso: enviar_simulacao "<nome da barragem>" ["<descrição>"]')
+        print('exemplo: enviar_simulacao "Itaipu" "Cenário de chuva intensa"')
+        print("  (abre um seletor de pasta no navegador; escolha a pasta com os Depth*.tif)")
+        return
+
+    nome = args[0]
+    descricao = args[1] if len(args) == 2 else None
+
+    upload_id = secrets.token_hex(16)
+    pasta = os.path.join(UPLOAD_ROOT, upload_id)
+    os.makedirs(pasta, mode=0o700)
+
+    try:
+        print("Escolha a pasta com os arquivos Depth*.tif na janela que abriu no navegador.")
+        print("(Ctrl+C para cancelar)")
+        _avisar_navegador("upload", upload_id)
+
+        inicio = time.time()
+        ultimo = -1
+        while True:
+            if os.path.exists(os.path.join(pasta, ".cancelado")):
+                print("Envio cancelado.")
+                return
+            if os.path.exists(os.path.join(pasta, ".concluido")):
+                break
+            if time.time() - inicio > UPLOAD_TIMEOUT_S:
+                print("Tempo esgotado esperando o envio.")
+                _avisar_navegador("fechar")
+                return
+            recebidos = sum(1 for n in os.listdir(pasta) if n.lower().endswith(".tif"))
+            if recebidos != ultimo:
+                if recebidos:
+                    sys.stdout.write(f"\r  recebidos: {recebidos} arquivo(s)")
+                    sys.stdout.flush()
+                ultimo = recebidos
+            time.sleep(0.5)
+
+        recebidos = sum(1 for n in os.listdir(pasta) if n.lower().endswith(".tif"))
+        print(f"\r  recebidos: {recebidos} arquivo(s). Upload concluído.")
+        if recebidos == 0:
+            print("Nenhum arquivo Depth*.tif recebido.")
+            return
+
+        print(f"Importando '{nome}'...")
+        comando = [PYTHON, MANAGE_PY, "import_flood_simulation", "--folder", pasta, "--name", nome]
+        if descricao:
+            comando += ["--description", descricao]
+        subprocess.run(comando, check=False)
+    except KeyboardInterrupt:
+        print("\nEnvio cancelado.")
+        _avisar_navegador("fechar")
+    finally:
+        shutil.rmtree(pasta, ignore_errors=True)
 
 
 def cmd_deletar_simulacao(args):
@@ -101,7 +183,11 @@ def cmd_ajuda(args):
 COMANDOS = {
     "importar_simulacao": (
         cmd_importar_simulacao,
-        'importa uma simulação a partir de uma pasta com os GeoTIFFs: importar_simulacao <pasta> "<nome>" ["<descrição>"]',
+        'importa uma pasta que já está NO SERVIDOR: importar_simulacao <pasta> "<nome>" ["<descrição>"]',
+    ),
+    "enviar_simulacao": (
+        cmd_enviar_simulacao,
+        'envia uma pasta do SEU PC (abre seletor no navegador) e importa: enviar_simulacao "<nome>" ["<descrição>"]',
     ),
     "deletar_simulacao": (
         cmd_deletar_simulacao,

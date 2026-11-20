@@ -10,7 +10,27 @@
   Acesso de shell completo ao servidor. 
 </p>
 
-<div id="terminal" style="height: 70vh; background:#000; padding:8px; border-radius:6px; width: 80%; margin: 0 auto;"></div>
+<div style="position: relative; width: 80%; margin: 0 auto;">
+  <div id="terminal" style="height: 70vh; background:#000; padding:8px; border-radius:6px;"></div>
+
+  <!-- Painel aberto pelo comando enviar_simulacao (ver shell_simulacoes.py) -->
+  <div id="upload-painel"
+       style="position:absolute; inset:0; background:rgba(0,0,0,.75); border-radius:6px;
+              display:none; align-items:center; justify-content:center;">
+    <div style="background:#fff; color:#222; padding:20px 24px; border-radius:8px; width:min(420px, 90%); font-family:sans-serif;">
+      <h3 style="margin:0 0 8px;">Enviar simulação</h3>
+      <p id="upload-texto" style="margin:0 0 14px; font-size:.95em;">
+        Escolha a pasta do seu computador que contém os arquivos <code>Depth*.tif</code>.
+      </p>
+      <input id="upload-input" type="file" webkitdirectory multiple hidden>
+      <progress id="upload-progresso" value="0" max="1" hidden style="width:100%; margin-bottom:12px;"></progress>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button id="upload-cancelar" type="button">Cancelar</button>
+        <button id="upload-escolher" type="button" style="background:#0a06f3; color:#fff; border:0; padding:6px 14px; border-radius:4px;">Escolher pasta</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="{% static 'adminApp/vendor/xterm/js/xterm.min.js' %}"></script>
 <script src="{% static 'adminApp/vendor/xterm/js/xterm-addon-fit.min.js' %}"></script>
@@ -32,6 +52,106 @@
   socket.onclose = () => term.write("\r\n\r\n[conexão encerrada]\r\n");
 
   term.onData((data) => socket.send(data));
+
+  // --- enviar_simulacao: a shell manda "\x1b]7777;upload;<id>\x07" -------
+  // O terminal roda no servidor e não lê o disco do seu PC; quem lê é o
+  // navegador. Ele envia cada Depth*.tif para a pasta que a shell criou e
+  // avisa no fim — a shell então roda a importação e mostra o progresso.
+  const CSRF = "{{ csrf_token }}";
+  const painel = document.getElementById('upload-painel');
+  const input = document.getElementById('upload-input');
+  const texto = document.getElementById('upload-texto');
+  const progresso = document.getElementById('upload-progresso');
+  const btnEscolher = document.getElementById('upload-escolher');
+  const btnCancelar = document.getElementById('upload-cancelar');
+  let uploadId = null;
+  let enviando = false;
+
+  function abrirPainel(id) {
+    uploadId = id;
+    enviando = false;
+    input.value = '';
+    texto.textContent = 'Escolha a pasta do seu computador que contém os arquivos Depth*.tif.';
+    progresso.hidden = true;
+    btnEscolher.disabled = false;
+    btnCancelar.disabled = false;
+    btnCancelar.textContent = 'Cancelar';
+    btnCancelar.onclick = null;
+    painel.style.display = 'flex';
+  }
+
+  function fecharPainel() {
+    painel.style.display = 'none';
+    uploadId = null;
+    term.focus();
+  }
+
+  async function post(url, body) {
+    const resp = await fetch(url, {
+      method: 'POST', body, credentials: 'same-origin',
+      headers: { 'X-CSRFToken': CSRF },
+    });
+    if (!resp.ok) {
+      let msg = `HTTP ${resp.status}`;
+      try { msg = (await resp.json()).erro || msg; } catch (e) {}
+      throw new Error(msg);
+    }
+  }
+
+  async function finalizar(cancelado) {
+    // Sempre manda um campo: um multipart vazio é recusado pelo daphne (400).
+    const fd = new FormData();
+    fd.append('cancelado', cancelado ? '1' : '0');
+    await post(`/terminal/upload/${uploadId}/fim/`, fd);
+  }
+
+  term.parser.registerOscHandler(7777, (dados) => {
+    const [acao, valor] = dados.split(';');
+    if (acao === 'upload' && /^[0-9a-f]{32}$/.test(valor || '')) abrirPainel(valor);
+    if (acao === 'fechar') fecharPainel();
+    return true;
+  });
+
+  btnEscolher.addEventListener('click', () => { if (uploadId) input.click(); });
+
+  btnCancelar.addEventListener('click', async () => {
+    if (!uploadId || enviando) return;
+    try { await finalizar(true); } catch (e) {}
+    fecharPainel();
+  });
+
+  input.addEventListener('change', async () => {
+    if (!uploadId) return;
+    const arquivos = [...input.files].filter((f) => /^depth.*\.tif$/i.test(f.name));
+    if (!arquivos.length) {
+      texto.textContent = 'Nenhum arquivo Depth*.tif nessa pasta. Escolha outra.';
+      return;
+    }
+    enviando = true;
+    btnEscolher.disabled = true;
+    btnCancelar.disabled = true;
+    progresso.hidden = false;
+    progresso.max = arquivos.length;
+    try {
+      for (let i = 0; i < arquivos.length; i++) {
+        texto.textContent = `Enviando ${i + 1}/${arquivos.length}: ${arquivos[i].name}`;
+        progresso.value = i;
+        const fd = new FormData();
+        fd.append('arquivo', arquivos[i], arquivos[i].name);
+        await post(`/terminal/upload/${uploadId}/arquivo/`, fd);
+      }
+      progresso.value = arquivos.length;
+      await finalizar(false);
+      fecharPainel();
+    } catch (e) {
+      texto.textContent = `Erro no envio: ${e.message}`;
+      try { await finalizar(true); } catch (e2) {}
+      enviando = false;
+      btnCancelar.disabled = false;
+      btnCancelar.textContent = 'Fechar';
+      btnCancelar.onclick = fecharPainel;
+    }
+  });
 
   window.addEventListener('resize', () => {
     fitAddon.fit();
